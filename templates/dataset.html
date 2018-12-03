@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+
+<html>
+    <head>
+       <title>Deep Learning</title>
+       <link rel="stylesheet" media="screen" href ="static/bootstrap.min.css">
+       <link rel="stylesheet" href="static/bootstrap-theme.min.css">
+       <meta name="viewport" content = "width=device-width, initial-scale=1.0">     
+    </head>
+    <body>
+        {% include '_navbar.html' %}
+        <script>            
+            function myFunction(){
+                var class_name=["aeroplane", "bicycle", "bird", "boat","bottle","bus","car","cat","chair","cow","diningtable","dog","horse","motorbike","person","pottedplant","sheep","train","sofa","tvmonitor"];
+                var textarea = document.getElementById('ta');
+                textarea.value = class_name.join("\n");
+            }
+            function myFunction2(){
+                var class_name=[];
+                var textarea = document.getElementById('ta');
+                textarea.value = ""
+            }
+         </script>
+
+        <div class="container"> 
+        <h2>YOLO v3</h2>
+        <form method="post">        
+            <label>Image path: </label>
+            <input type="text" class="form-control" id="train_dataset" name="train_imagePath" value="/home/kelly/data/Dataset/Mura/LCD4/label_img">
+            <label>xml path: </label>
+            <input type="text" class="form-control" id="train_dataset" name="train_labelPath" value="/home/kelly/data/Dataset/Mura/LCD4/has_label_A">
+<!--        <input type="file" webkitdirectory directory multiple/> -->
+            <br>
+            <label>class names: </label>
+            <button type="button" class="btn btn-info" onclick="myFunction2()">Other</button>
+            <button type="button" class="btn btn-info" onclick="myFunction()">VOC</button>
+            <br>
+            <br>
+            <textarea cols='10' rows='4' name="classes" id="ta" onchange="change()">shock&#13;&#10;defect</textarea>
+            <br>
+            <label>Dataset name: </label>
+            <input type="text" class="form-control" id="dataset_name" name="dataset_name" value="Mura_LCD4">
+            <br>
+            <button type="submit" class="btn btn-primary" id="bt" name="btn_dataset" >Start</button>
+            <br>
+        </form>   
+        </div>
+
+        <div class="loader"></div>
+        
+    </body>
+
+</html>

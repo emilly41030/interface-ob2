@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+        <head>
+                <title>Test</title>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+                <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+                <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        </head>
+        {% include '_navbar.html' %}
+<title>Path: {{ tree.name }}</title>
+<h1>{{ tree.name }}</h1>
+<ul>
+<form action="{{ url_for('dirtree') }}" method="post">  
+    <div class="form-group">
+        <label for="FormControlSelect0">Choose dataset: </label>
+        <select name="comp0_select" onchange="this.form.submit()" class="form-control" id="FormControlSelect0">
+            <option selected="selected" >{{ dataset }}</option>
+        </select>    
+        <label for="FormControlSelect0">Choose dataset: </label>
+        <select name="comp0_select2" class="form-control" id="FormControlSelect2">
+            {%- for item in tree.children recursive %}
+            <option>{{ item.name }}</option>
+            {%- endfor %}
+        </select>            
+    </div>
+    <div class="form-group">
+        <label for="FormControlSelect2">Choose Single Image: </label>
+        <select multiple  name="comp2_select" class="form-control" id="FormControlSelect2">
+                {%- for item in tree.children recursive %}
+                        <option>{{ item.name }} </option>
+                {%- endfor %}
+        </select>
+    </div>
+</form>
+
+<script>
+    function val() {
+        d = document.getElementById("FormControlSelect0").value;
+        var select_2 = document.createElement("select");
+        
+
+    }
+</script>
+

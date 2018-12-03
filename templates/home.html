@@ -1,0 +1,64 @@
+<html>
+    <head>
+       <title>Deep Learning</title>
+       <link rel="stylesheet" media="screen" href ="static/bootstrap.min.css">
+       <link rel="stylesheet" href="static/bootstrap-theme.min.css">
+       <link href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.10/c3.min.css" rel="stylesheet" />    
+       <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+       <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.10/c3.min.js"></script>
+      <meta name="viewport" content = "width=device-width, initial-scale=1.0">     
+    </head>
+    <body>
+      {% include '_navbar.html' %}
+      <script type="text/javascript">
+         onReady('#chart', function() {
+           var chart = c3.generate({
+             data: {
+               columns: [
+                 ['loss', 300, 350, 300, 0, 0, 0],
+                 ['IOU', 130, 100, 140, 200, 150, 50]
+               ],
+               types: {
+                  loss: 'area',
+                  IOU: 'area-spline'
+               }
+             },
+             axis: {
+               y: {
+                 padding: {
+                   bottom: 0
+                 },
+                 min: 0
+               },
+               x: {
+                 padding: {
+                   left: 0
+                 },
+                 min: 0,
+                 show: false
+               }
+             }
+           });
+         });
+         
+         // Set a timeout so that we can ensure that the `chart` element is created.
+         function onReady(selector, callback) {
+           var intervalID = window.setInterval(function() {
+             if (document.querySelector(selector) !== undefined) {
+               window.clearInterval(intervalID);
+               callback.call(this);
+             }
+           }, 500);
+         }
+       </script>
+      <div class="container">          
+         <h2>YOLO v3</h2>
+         <form>  
+               <h1>Welcome</h1>
+               
+         </form> 
+         <div id="chart"></div>
+              
+      </div>
+   </body>
+</html>

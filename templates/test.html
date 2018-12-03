@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+    <head>
+            <title>Test</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    </head>
+    {% include '_navbar.html' %}
+    <body>
+        
+        <div class="container">
+            <h2>YOLO v3</h2>
+            {% if error %}
+            <div class="alert alert-danger">
+            <strong>Error:</strong> {{ error }}        
+            </div>
+            {% endif %}           
+            <form action="{{ url_for('test') }}" method="post">  
+                <div class="form-group">
+                    <label for="FormControlSelect0">Choose dataset: </label>
+                    <select size="{{size_d}}" name="comp0_select" onclick="this.form.submit()" class="form-control" id="FormControlSelect0">
+                        {%- for item in tree recursive %}
+                            {% if item == dataset  %}
+                                <option selected="selected">{{ dataset }}</option>
+                            {% else %}
+                                <option>{{ item }}</option>
+                            {%- endif %}
+                        {%- endfor %}
+                    </select>
+                </div>
+                
+            </form>
+            
+
+            <form   action="{{ url_for('testing') }}" method="post">
+                <div class="form-group">
+                    <label for="FormControlSelect1">Choose weights: </label>
+                    <select size="5" name="comp1_select" class="form-control" id="FormControlSelect1">
+                            {%- for item in childtree recursive %}
+                                    <option>{{ item }} </option>
+                            {%- endfor %}
+                    </select>
+                   
+                    <label for="FormControlSelect2">Choose Single Image: </label>
+                    <select multiple  name="comp2_select" class="form-control" id="FormControlSelect2">
+                            <!-- <option selected="selected">2008_008556.jpg</option> -->
+                            {%- for item in img recursive %}
+                                    <option>{{ item }} </option>
+                            {%- endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" name="btn" id="test_start_btn" >Start</button>
+            </form>
+        </div>
+       
+        <style>
+            a.list-group-item{
+                font-size: 24px;
+            }
+        </style>
+    </body>
+</html>

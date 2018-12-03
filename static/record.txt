@@ -1,0 +1,4 @@
+dataset:Mura_LCD4
+cfg_setdata:scripts/Mura_LCD4/voc_Mura_LCD4.data
+cfg_yolo:scripts/Mura_LCD4/yolov3_Mura_LCD4.cfg
+classNamePath:data/voc_Mura_LCD4.names

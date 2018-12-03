@@ -1,0 +1,44 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html>
+    <head>
+       <title>Deep Learning</title>
+       <link rel="stylesheet" media="screen" href ="static/bootstrap.min.css">      
+       <link rel="stylesheet" href="static/bootstrap-theme.min.css">
+       <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+       <meta name="viewport" content = "width=device-width, initial-scale=1.0">
+       
+    </head>
+    <body> 
+      {% include '_navbar.html' %}
+      
+    <style>
+        img {
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+            }
+    </style>
+    <script>
+        var t2 = window.setInterval(function (){
+            var img_name = document.getElementById("tt1").value;               
+            $.ajax({
+                cache:false,
+                url:'static/Figure/result/'+img_name,
+                success: function(){
+                    var img = new Image();
+                    img.onload = function () {}
+                    img.src = 'static/Result/'+img_name;
+                    document.body.appendChild(img);
+                    clearInterval(t2);
+                },
+            });
+        },3000);    
+    </script> 
+
+    <div class="container">
+        <h2>Test</h2>
+        <input type="hidden" name="tt1" id="tt1" value="{{ img }}">
+    </div>    
+    </body>
+</html>
