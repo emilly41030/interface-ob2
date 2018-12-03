@@ -387,8 +387,24 @@ def test():
     
     for f in dirfiles:
         childtree.append(f)
-    if request.method == "POST":
-        if request.form['comp0_select']:
+    if request.method == "POST":        
+        if request.form['del_btn']:
+            backupfiles = os.listdir(backupPath)
+            for dirname in backupfiles:     # 存放 weight
+                print(dirname)
+                shutil.rmtree(backupPath+'/'+dirname, ignore_errors=True)
+            file = os.listdir('scripts')  # 存放 log .data .cfg
+            for dirname in file:
+                if not dirname=='backup':
+                    shutil.rmtree('scripts/'+dirname, ignore_errors=True)      
+            file = os.listdir('static/task')  # 存放 log .data .cfg
+            for dirname in file:
+                shutil.rmtree('static/task/'+dirname, ignore_errors=True)
+            
+            error = "Cannot find any backup"
+            return render_template('test.html',error=error)
+        elif request.form['comp0_select']:
+            print("~~~~~~~~~~~~1111comp0_select11")
             dataset = request.form.get('comp0_select')
             del childtree
             childtree=[]
@@ -396,6 +412,7 @@ def test():
             for f in dirfiles:
                 childtree.append(f)
             config.TEST_DATASET=dataset
+
     return render_template('test.html',size_d=size_d, dataset=config.TEST_DATASET,tree=backupDir, childtree=childtree, img=img, error=error)
 
 

@@ -16,11 +16,12 @@
             <div class="alert alert-danger">
             <strong>Error:</strong> {{ error }}        
             </div>
-            {% endif %}           
+            {% endif %}
             <form action="{{ url_for('test') }}" method="post">  
-                <div class="form-group">
+                <div class="form-group">                                        
+                    
                     <label for="FormControlSelect0">Choose dataset: </label>
-                    <select size="{{size_d}}" name="comp0_select" onclick="this.form.submit()" class="form-control" id="FormControlSelect0">
+                    <select size="{{size_d}}" name="comp0_select" value="comp0_select" onclick="this.form.submit()" class="form-control" id="FormControlSelect0">
                         {%- for item in tree recursive %}
                             {% if item == dataset  %}
                                 <option selected="selected">{{ dataset }}</option>
@@ -29,11 +30,15 @@
                             {%- endif %}
                         {%- endfor %}
                     </select>
+                    
                 </div>
                 
             </form>
+            <br>
+            <form action="{{ url_for('test') }}" method="post">
+                <button type="submit" class="btn btn-primary" name="del_btn" value="del_btn">Delete All</button>
+            </form>
             
-
             <form   action="{{ url_for('testing') }}" method="post">
                 <div class="form-group">
                     <label for="FormControlSelect1">Choose weights: </label>
