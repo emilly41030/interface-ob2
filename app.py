@@ -141,12 +141,6 @@ def ImportDataset():
         datasetName = request.form.get('dataset_name')
         if str(datasetName)=="":
             return "Dataset name error"
-        
-        if not check_dir_notzero(OriginImgPath):
-            return "Error: "+str(OriginImgPath)
-        if not check_dir_notzero(OriginLabelPath):
-            return "Error: "+str(OriginLabelPath)
-
         config.DATASET_NAME=datasetName
         firName = OriginImgPath.split('/')[-3]    # firName = Mura
         secName = OriginImgPath.split('/')[-2]    # secName = LCD4
@@ -188,12 +182,17 @@ def ImportDataset():
         LabelPath = os.getcwd()+'/'+newPath + "/"+ secName +'/Annotations'
         create_dir(os.getcwd()+'/'+newPath)
         create_dir(os.getcwd()+'/'+newPath + "/"+ secName)
-      
-        print("ln -sf "+OriginImgPath+" "+ImagesPath)
-        subprocess.call(['ln', '-sf', OriginImgPath,ImagesPath])
-        print("ln -sf "+OriginLabelPath+" "+LabelPath)        
-        subprocess.call(['ln', '-sf', OriginLabelPath,LabelPath])
-        
+        cmd_1 = " ln -sf "+OriginImgPath+" "+ImagesPath
+        cmd_2 = " ln -sf "+OriginLabelPath+" "+LabelPath
+        if not check_dir_notzero(OriginImgPath):
+            return "Error: "+str(OriginImgPath)
+        if not check_dir_notzero(OriginLabelPath):
+            return "Error: "+str(OriginLabelPath)
+       
+        print(cmd_1)
+        print(cmd_2)
+        subprocess.call(cmd_1)
+        subprocess.call(cmd_2)
         file_remove(newPath+"/"+secName+"/ImageSets/Main/train.txt")
         file_remove(newPath+"/"+secName+"/ImageSets/Main/val.txt")
 
@@ -237,15 +236,6 @@ def train():
     subprocess.Popen(['rm', 'static/train_log_loss.txt'])
     subprocess.Popen(['rm', 'static/test.txt'])
     return render_template('train.html', dirList=datasetList)
-
-def parse_loss_log(self,log_path, line_num=2000):
-        result = pd.read_csv(log_path, skiprows=[x for x in range(line_num) if ((x % 10 != 9) | (x < 10))],error_bad_lines=False, names=['loss', 'avg', 'rate', 'seconds', 'images'])
-        result['loss'] = result['loss'].str.split(' ').str.get(1)
-        result['avg'] = result['avg'].str.split(' ').str.get(1)
-        result['rate'] = result['rate'].str.split(' ').str.get(1)
-        result['seconds'] = result['seconds'].str.split(' ').str.get(1)
-        result['images'] = result['images'].str.split(' ').str.get(1)
-
 
 def write_log(datasetName, current, paras):
     add_class('data/voc_'+datasetName+'.names')       
@@ -352,13 +342,15 @@ def option():
 
 @app.route("/testing", methods=['GET', 'POST'])
 def testing():
-    create_dir(resultDir)    
-    dataset = config.DATASET_NAME+"___" + config.TIME
+    create_dir(resultDir)
+    print(config.TEST_DATASET)
+    dataset = config.TEST_DATASET
+    name = config.TEST_DATASET.split("___")
     print("dataset = "+dataset)
     wei_file = request.form.get('comp1_select')
     img = request.form.get('comp2_select')
-    print("./darknet detector test scripts/"+dataset+"/voc_"+config.DATASET_NAME+".data scripts/backup/"+dataset+"/"+str(wei_file)+ ' data/'+str(img))
-    p = subprocess.Popen(["./darknet", "detector", "test","scripts/"+dataset+"/voc_"+config.DATASET_NAME+".data","scripts/backup/"+dataset+"/"+str(wei_file), 'data/'+str(img)])
+    print("./darknet detector test scripts/"+dataset+"/voc_"+name[0]+".data scripts/backup/"+dataset+"/"+str(wei_file)+ ' data/'+str(img))
+    p = subprocess.Popen(["./darknet", "detector", "test","scripts/"+dataset+"/voc_"+name[0]+".data","scripts/backup/"+dataset+"/"+str(wei_file), 'data/'+str(img)])
     time.sleep(2)
     shutil.move('predictions.jpg', resultDir+"/"+str(wei_file)+'-'+dataset+'.jpg')
     return render_template("testing.html", img=config.TEST_IMG)

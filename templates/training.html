@@ -92,18 +92,41 @@
                 </div>
             </form>
             <div id="chart"></div>
-            <script src="static/create-graph.js"></script>
-           
+            <!-- <script src="static/create-graph.js"></script>            -->
         </div>
         
         
-
-        <script type="text/javascript">            
+        
+        <script type="text/javascript">
+            var a= 0;
+            filepath = document.getElementById('filepath').value;
+            console.log('static/task/'+filepath+'/images.json');
+            setInterval(function(){
+                $.getJSON('static/task/'+filepath+'/images.json', function (externaldata) {
+                console.log(JSON.stringify(externaldata));
+                console.log("JSON Data: " +externaldata);
+                var chart = c3.generate({
+                    title: {
+                        text:'External JSON loading via C3.js'
+                    },
+                    bindto: '#chart',
+                    data: {
+                        json: externaldata,
+                        type: 'area-spline',
+                    }
+                })
+                a=a+1;
+                console.log(a);
+             }, 5000);
+            //  setInterval(function(){
+            //     chart.flow()
+            // }, 10000)
+            });
             img_name = document.getElementById("tt1").value;
             epoch = document.getElementById("tt2").value;
             var finish = false;
             var is_first = true;
-            parseData();
+            parseData(is_first);
             is_first = false;
             var t2 = window.setInterval(()=>{
                 $.ajax({
@@ -123,25 +146,67 @@
                         })
                     },
                 });
-                parseData();
+                parseData(is_first);
             }, 10000);
-
-            $.getJSON('static/'+filepath+'images.json', function (externaldata) {
-            var chart = c3.generate({
-                title: {
-                    text:'External JSON loading via C3.js'
-                },
-                bindto: '#chart',
-                data: {
-                    json: externaldata,
-                    type: 'area-spline',
-                }
-            })
             
-            setInterval(function(){
-                chart.flow()
-            }, 1500)
-        });
-          </script>          
+            // function parseData(is_first) {
+            //     console.log("static/task/"+filepath+"/train_log_loss.txt")
+            //     Papa.parse("static/task/"+filepath+"/train_log_loss.txt", {
+            //         download: true,
+            //         complete: function(results) {
+            //             iter = [];
+            //             var loss = ["loss"];
+            //             console.log("~~~~~~~~~!!!!!!!!~~~~~~~~~~");
+            //             console.log(results.data.length);
+            //             createGraph(iter, loss);
+            //             console.log("~~~~~~~~~!!!!!!!!~~~~~~~~~~");
+            //             for (var i = 0; i < results.data.length-1; i++) {		
+            //                 var data_s1 = results.data[i][0].split(":");
+            //                 var data_s2 = (results.data[i][1]).split(" ");
+            //                 iter.push(data_s1[0]);
+            //                 loss.push(data_s2[1]);
+            //                 console.log("= = = = = Data = = = = ")
+            //                 console.log(results.data);
+            //                 console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            //                 console.log(iter);
+            //                 console.log(loss);
+            //                 console.log("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            //                 createGraph(iter, loss);
+                    
+            //             }
+            //         }
+            //     });
+            // }
+
+            // function createGraph(iter, loss) {
+            //     // console.log(iter);
+            //     console.log("~~~~~~~~~~~~~  createGraph  ~~~~~~~~~~~");
+
+            //     var chart = c3.generate({
+            //         bindto: '#chart',
+            //         data: {
+            //             columns: [loss]
+            //         },
+            //         axis: {
+            //             x: {
+            //                 type: 'category',
+            //                 categories: iter,
+            //                 tick: {
+            //                     multiline: false,
+            //                     culling: {
+            //                         max: 15
+            //                     }
+            //                 }
+            //             }
+            //         },
+            //         zoom: {
+            //             enabled: true
+            //         },
+            //         legend: {
+            //             position: 'right'
+            //         }
+            //     });
+            // }
+          </script>
     </body>
 </html>
