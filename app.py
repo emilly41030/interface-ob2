@@ -42,6 +42,17 @@ create_dir(backupPath)
 create_dir(datasetPath)
 create_dir("static")
 
+
+def check_dir_notzero(path):
+    if os.path.isdir(path):
+        f = os.listdir(path)
+        if len(f) == 0:
+            return False
+        else: 
+            return True
+    else:
+        return False
+
 def read_record():
     if os.path.isfile(recordPath):
         with open(recordPath, "r") as f:
@@ -124,20 +135,27 @@ def ImportDataset():
         OriginImgPath = request.form.get('train_imagePath') #/home/kelly/data/Dataset/Mura/LCD4/JPEGImages
         if str(OriginImgPath)=="":
             return "Image path error"
-        OriginLabelPath = request.form.get('train_labelPath') #/home/kelly/data/Dataset/Mura/LCD4/JPEGImages
+        OriginLabelPath = request.form.get('train_labelPath') #/home/kelly/data/Dataset/Mura/LCD4/Annotataions
         if str(OriginLabelPath)=="":
             return "Label path error"
         datasetName = request.form.get('dataset_name')
         if str(datasetName)=="":
             return "Dataset name error"
+        
+        if not check_dir_notzero(OriginImgPath):
+            return "Error: "+str(OriginImgPath)
+        if not check_dir_notzero(OriginLabelPath):
+            return "Error: "+str(OriginLabelPath)
+
         config.DATASET_NAME=datasetName
         firName = OriginImgPath.split('/')[-3]    # firName = Mura
         secName = OriginImgPath.split('/')[-2]    # secName = LCD4
         #os.path.dirname(os.path.dirname(datasetPath))  擷取 JPEGImages 上上層 /home/kelly/data/Dataset/Mura
-        create_dir(datasetPath+datasetName)
-        print()
+        create_dir(datasetPath+datasetName)        
         if os.path.isdir(datasetPath+datasetName+'/'+firName):
             shutil.rmtree(datasetPath+datasetName+'/'+firName, ignore_errors=True)
+
+        ####    寫 class 類別名稱   ####
         class_temp = request.form['classes'] # 讀進來是 unicode
         classNamePath = 'data/voc_'+datasetName+'.names'
         config.CLASSPATH = classNamePath
@@ -151,6 +169,8 @@ def ImportDataset():
         except:          
             return ".names 寫檔錯誤!!!"        
         print("classes = "+str(classes))
+        ###############################
+
         # print(datasetPath+'Creat_listName.py')
         if not os.path.isfile(datasetPath+'Creat_listName.py'):
             if os.path.isfile('Creat_listName.py'):
@@ -168,8 +188,12 @@ def ImportDataset():
         LabelPath = os.getcwd()+'/'+newPath + "/"+ secName +'/Annotations'
         create_dir(os.getcwd()+'/'+newPath)
         create_dir(os.getcwd()+'/'+newPath + "/"+ secName)
-        subprocess.call(["ln","-sf",OriginImgPath, ImagesPath])
-        subprocess.call(["ln","-sf",OriginLabelPath, LabelPath])
+      
+        print("ln -sf "+OriginImgPath+" "+ImagesPath)
+        subprocess.call(['ln', '-sf', OriginImgPath,ImagesPath])
+        print("ln -sf "+OriginLabelPath+" "+LabelPath)        
+        subprocess.call(['ln', '-sf', OriginLabelPath,LabelPath])
+        
         file_remove(newPath+"/"+secName+"/ImageSets/Main/train.txt")
         file_remove(newPath+"/"+secName+"/ImageSets/Main/val.txt")
 
@@ -182,9 +206,9 @@ def ImportDataset():
         #                    產生 label 資料夾
         if not os.path.isfile(datasetPath+'voc_label.py'):
             if os.path.isfile('voc_label.py'):
-                shutil.move('voc_label.py', datasetPath+'voc_label.py')
+                copyfile('voc_label.py', datasetPath+'voc_label.py')
             elif os.path.isfile('python/voc_label.py'):
-                shutil.move('python/voc_label.py', datasetPath+'voc_label.py')
+                copyfile('python/voc_label.py', datasetPath+'voc_label.py')
             else:
                 return "No such file: voc_label.py"
         # print("python "+datasetPath+"voc_label.py "+ImagesPath+" "+datasetName)

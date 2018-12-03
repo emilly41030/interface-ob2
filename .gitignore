@@ -33,3 +33,5 @@ Thumbs.db
 dataset
 darknet53.conv.74
 scripts
+*.a
+*.so
