@@ -14,9 +14,6 @@ import signal
 import sys
 import shutil
 import pandas as pd
-# import flask_sijax
-# import draw
-
 
 # App config.
 DEBUG = True
@@ -300,6 +297,7 @@ pid = 12
 def training():
     paras = []    
     file_remove("static/test.txt")
+    
     if request.method == 'POST':
         current = time.strftime("%Y%m%d-%H%M%S", time.localtime())
         config.EPOCH = request.form.get('max_batches')
@@ -313,7 +311,7 @@ def training():
         paras.append(request.form.get('batch'))
         paras.append(request.form.get('subdivisions'))
         paras.append(current)
-               
+
         Thread1=threading.Thread(target=write_log, args=(datasetName, current, paras))
         Thread1.start()       
         Thread2=threading.Thread(target=draw_loss, args=(datasetName, current))
@@ -340,6 +338,11 @@ def option():
             
     return render_template("train.html", pid=config.PID, dirList=datasetList)
 
+@app.route("/loss_gp", methods=['GET', 'POST'])
+def loss_gp():
+    return render_template("loss_gp.html")
+
+    
 @app.route("/testing", methods=['GET', 'POST'])
 def testing():
     create_dir(resultDir)
