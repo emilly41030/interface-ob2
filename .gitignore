@@ -35,3 +35,5 @@ darknet53.conv.74
 scripts
 *.a
 *.so
+*.weights
+templates/test_templates

@@ -406,8 +406,8 @@ def test():
             
             error = "Cannot find any backup"
             return render_template('test.html',error=error)
-        elif request.form['comp0_select']:
-            print("~~~~~~~~~~~~1111comp0_select11")
+            
+        elif request.form['comp0_select']:            
             dataset = request.form.get('comp0_select')
             del childtree
             childtree=[]
@@ -426,18 +426,3 @@ if __name__ == "__main__":
     file_remove("test.txt")
     read_record()
     app.run(debug=True,host='0.0.0.0', port=6060, threaded=True)
-
-
-# def make_tree(path):
-#     tree = dict(name=os.path.basename(path), children=[])
-#     try: lst = os.listdir(path)
-#     except OSError:
-#         pass #ignore errors
-#     else:
-#         for name in lst:
-#             fn = os.path.join(path, name)
-#             if os.path.isdir(fn):
-#                 tree['children'].append(make_tree(fn))
-#             else:
-#                 tree['children'].append(dict(name=name))
-#     return tree
