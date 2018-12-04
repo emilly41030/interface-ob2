@@ -19,56 +19,110 @@
     <div id="mychart"></div>
 <body>
         <script>
-            var file = 'static/task/Mura_LCD4___20181203-163505/images.json'
+            var file = 'static/task/Mura_LCD4___20181203-173040/images.json'
             $.getJSON(file, function (externaldata) {
             var chart = c3.generate({
                 title: {
                     text:'External JSON loading via C3.js'
                 },
                 bindto: '#mychart',
-                data: {
-                   json: externaldata,
-                    type: 'area-spline',
-                }
                 // data: {
-                //     columns:[
-                //         ['avg_loss',0]
-                //     ],
-                //     type:'area-spline'
-                //     }   
-            })
-            $(document).ready(function() {
-                $.ajaxSetup({ cache: false });
-            });
-            setInterval(function(){
-                // $.ajax({ 
-                // type: 'GET', 
-                // cache:false, 
-                // url: file, 
-                // data: { get_param: 'value' }, 
-                // dataType: 'json',
-                // success: function (data) { 
-                //     console.log(data['avg_loss']);                    
-                //     chart.flow({
-                //         data: {
-                //             columns:[
-                //                 ['avg_loss',data['avg_loss']]
-                //             ],
-                //         type:'area-spline'
-                //         }   
-                //     })
-                //     chart.flush()
+                //    json: externaldata,
+                //     type: 'area-spline',
                 // }
-                data = ['avg_loss', 150, 300, 200, 100, 200,];
+
+                data : {
+                    columns:[
+                        ['avg_loss', 150, 300, 200, 100, 200,]
+                        ]
+                    },
+            axis: {
+            y: {
+              padding: {
+                bottom: 0
+              },
+              min: 0
+            },
+            x: {
+              padding: {
+                left: 0
+              },
+              min: 0,
+             
+            }}
+            });
+            data_temp=[]
+            setInterval(function(){
                 $.getJSON(file, function (externaldata) {
-                    console.log(externaldata)                  
-                    chart.load(data)
+                    console.log(externaldata.avg_loss)
+                    
+                    // chart.load({
+                    
+                    //     columns:[
+                    //         ['avg_loss',externaldata.avg_loss ]
+                    //         ]
+                    
+                       
+                    //     // data: {
+                    //     //     json: externaldata,
+                    //     //     type: 'area-spline',
+                    //     // }
+                        
+                    // }),
+                    chart.load({ json: externaldata} )
                     chart.flush();
 
             });
      
             }, 1500)
          })
+
+        //  $.getJSON(file, function (externaldata) {
+        //     var chart = c3.generate({
+        //         title: {
+        //             text:'External JSON loading via C3.js'
+        //         },
+        //         bindto: '#mychart',
+        //         data: {
+        //            json: externaldata,
+        //             type: 'area-spline',
+        //         }
+
+        //         // data : {
+        //         //     columns:[
+        //         //         ['avg_loss', 150, 300, 200, 100, 200,]
+        //         //         ]
+        //         //     },
+        //         // width: 60,
+        //     });
+        //     data_temp=[]
+        //     setInterval(function(){
+        //         $.getJSON(file, function (externaldata) {
+        //             console.log(externaldata.avg_loss)
+                    
+        //             chart.load({
+                       
+        //                 // data: {
+        //                 //     json: externaldata,
+        //                 //     type: 'area-spline',
+        //                 // }
+
+        //         data : {
+        //             columns:[
+        //                 ['avg_loss', 150, 300, 200, 100, 200,]
+        //                 ]
+        //             },
+        //             })
+        //             chart.flush();
+
+        //     });
+     
+        //     }, 1500)
+        // })
+
+            $(document).ready(function() {
+                $.ajaxSetup({ cache: false });
+            });
             
             
             </script>

@@ -91,7 +91,7 @@
                         style="height:500px;width:100%;background:white;display:none;"></div>
                 </div>
             </form>
-            <div id="chart"></div>
+            <div id="mychart"></div>
             <!-- <script src="static/create-graph.js"></script>            -->
         </div>
         
@@ -102,55 +102,18 @@
             filepath = document.getElementById('filepath').value;
             var file = 'static/task/'+filepath+'/images.json'
             console.log(file)
-            // $.getJSON(file, function (externaldata) {
-            var chart = c3.generate({
-                title: {
-                    text:'External JSON loading via C3.js'
-                },
-                bindto: '#chart',
-                // data: {
-                //    json: externaldata,
-                //     type: 'area-spline',
 
-                // }
-                data: {
-                            columns:[
-                                ['avg_loss',0]
-                            ],
-                        type:'area-spline'
-                        }   
-            })
             
-            setInterval(function(){
-                $.ajax({ 
-                type: 'GET', 
-                cache:false, 
-                url: file, 
-                data: { get_param: 'value' }, 
-                dataType: 'json',
-                success: function (data) { 
-                    console.log(data['avg_loss']);                   
-                    chart.load({
-                        data: {
-                            columns:[
-                                ['avg_loss',data['avg_loss']]
-                            ],
-                        type:'area-spline'
-                        }
-                    })
-                    chart.flush()
-                }
+            $(document).ready(function() {
+                $.ajaxSetup({ cache: false });
             });
-     
-            }, 1500)
-        // })
 
             img_name = document.getElementById("tt1").value;
             epoch = document.getElementById("tt2").value;
             var finish = false;
             var is_first = true;
             // parseData(is_first);
-            is_first = false;
+            // var chart = None;
             var t2 = window.setInterval(()=>{
                 $.ajax({
                     cache:false, 
@@ -161,15 +124,40 @@
                         finish=true
                         document.getElementById("close_btn").disabled =true;
                         document.getElementById("btn_train").disabled = false;
-                        document.getElementById("btn_test").disabled = false;                
+                        document.getElementById("btn_test").disabled = false;
                         clearInterval(t2);
                         $(document).ready(function(){
-                            $("#b1").hide();                            
-                            $("#b2").show();                   
+                            $("#b1").hide();
+                            $("#b2").show();
                         })
                     },
                 });
-         
+                 $.ajax({
+                    cache:false, 
+                    url:file,                   
+                    success: function(){
+                        $.getJSON(file, function (externaldata) {
+                            if (is_first==true){
+                                chart = c3.generate({
+                                title: {
+                                    text:'External JSON loading via C3.js'
+                                },
+                                bindto: '#mychart',
+                                data: {
+                                    json: externaldata,
+                                    type: 'area-spline',
+                                }                        
+                                });
+                                is_first = false;
+                            }
+                            
+                            $.getJSON(file, function (externaldata) {                                    
+                                chart.load({ json: externaldata} )
+                                chart.flush();
+                            });
+                        })
+                    },
+                });
             }, 3000);
         
             
