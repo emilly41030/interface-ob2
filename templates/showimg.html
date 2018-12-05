@@ -23,24 +23,16 @@
 
         <div class="container">
             <h2>Test</h2>           
-            <img src="static/Result/{{img}}" id="image">
-            
-        </div>
-        <script>
-          $(document).ready(function() {
-              $.ajaxSetup({ cache: false });
-          });
-          var i = 0;
-          var t2 = window.setInterval(()=>{
-            function myFunction() {
-              document.getElementById("image").src ="static/Result/{{img}}";
-            }
-            console.log(i);
-            if (i==2){
-              clearInterval(t2);
-            }
-            i=i+1;
-          }, 3000);
-        </script>
+            <img src="static/Result/{{img}}" alt="Cinque Terre" width="1000" height="300">
+            <input type="button" value="Reload Image" onclick="reloadImg()" />
+            <a href="javascript:reloadImg()">Reload Image</a>
+        </div>    
     </body>
+    <script>
+       
+        function reloadImg() {
+            var d=new Date();
+            document.getElementById("imageid").src="captcha_image.php?a="+d.getTime();
+        }
+    </script>
 </html>

@@ -26,7 +26,7 @@ class Yolov3LogVisualization:
         iou = []
         with open(self.result_dir + '/'+key_word+'.json', 'w') as outfile:
             with open(self.log_path, 'r') as f:
-                with open(save_log_path, 'w') as train_log:
+                #with open(save_log_path, 'w') as train_log:
                     next_skip = False
                     for line in f:
                         if next_skip:
@@ -42,13 +42,14 @@ class Yolov3LogVisualization:
                             next_skip = True
                             continue
                         if key_word in line:
-                            train_log.write(line)
+                            #train_log.write(line)
                             if key_word=="images":
+                                #print(line.split(' ')[2])
                                 avg_loss.append(float(line.split(' ')[2]))
                             else:
                                 iou.append(float(line.split(' ')[4].split(',')[0]))
             f.close()
-            train_log.close()
+        #    train_log.close()
             
             if key_word=="images":
                 data = {"avg_loss":avg_loss}       
@@ -88,8 +89,8 @@ class Yolov3LogVisualization:
     def loss_pic(self):
         train_log_loss_path = os.path.join(self.result_dir, 'train_log_loss.txt')
         self.extract_log(train_log_loss_path, 'images')
-        pd_loss = self.parse_loss_log(train_log_loss_path)
-        self.gene_loss_pic(pd_loss)
+        #pd_loss = self.parse_loss_log(train_log_loss_path)
+        #self.gene_loss_pic(pd_loss)
 
 
     def parse_iou_log(self,log_path, line_num=2000):
@@ -127,8 +128,8 @@ class Yolov3LogVisualization:
     def iou_pic(self):
         train_log_loss_path = os.path.join(self.result_dir, 'train_log_iou.txt')
         self.extract_log(train_log_loss_path, 'IOU')
-        pd_loss = self.parse_iou_log(train_log_loss_path)
-        self.gene_iou_pic(pd_loss)
+      #  pd_loss = self.parse_iou_log(train_log_loss_path)
+      #  self.gene_iou_pic(pd_loss)
 
 
 if __name__ == '__main__':

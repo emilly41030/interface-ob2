@@ -284,7 +284,7 @@ def draw_loss(datasetName, current):
         # subprocess.Popen(['rm', 'static/train_log_loss.txt'])
         # subprocess.call(["ln","-s",'scripts/'+datasetName+"___"+current+'/train_log_loss.txt', 'static/train_log_loss.txt'])
         print("draw~~~~~~~ end ~~~~~~~~~~")
-        time.sleep(10)
+        time.sleep(5)
     print("draw finish !!!!!")
 
 @app.route('/index')
@@ -352,15 +352,21 @@ def testing():
     print("dataset = "+dataset)
     wei_file = request.form.get('comp1_select')
     img = request.form.get('comp2_select')
-    print("./darknet detect scripts/"+dataset+"/yolov3_"+name[0]+".cfg scripts/backup/"+dataset+"/"+str(wei_file)+ ' data/'+str(img))
-    p = subprocess.Popen(["./darknet", "detect","scripts/"+dataset+"/yolov3_"+name[0]+".cfg","scripts/backup/"+dataset+"/"+str(wei_file), 'data/'+str(img)])
+    print("./darknet detector test scripts/"+dataset+"/voc_"+name[0]+".data scripts/"+dataset+"/yolov3_"+name[0]+".cfg scripts/backup/"+dataset+"/"+str(wei_file)+ ' data/'+str(img))
+    p = subprocess.Popen(["./darknet", "detector","test","scripts/"+dataset+"/voc_"+name[0]+".data", "scripts/"+dataset+"/yolov3_"+name[0]+".cfg","scripts/backup/"+dataset+"/"+str(wei_file), 'data/'+str(img)])
     time.sleep(3)
     while True:
         if os.path.isfile(os.getcwd()+'/predictions.jpg'):           
-            break;
+            break
     img_name = str(wei_file)+'-'+dataset+'.jpg'
     shutil.move('predictions.jpg', resultDir+"/"+img_name)
+    time.sleep(3)
     return render_template("testing.html", img=img_name)
+
+@app.route("/showimg", methods=['GET', 'POST'])
+def showimg():
+    name = 'yolov3_Mura_LCD4_final.weights-Mura_LCD4___20181205_113259.jpg'
+    return render_template('showimg.html',img=name)
 
 @app.route("/test", methods=['GET', 'POST'])
 def test():  
