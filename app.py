@@ -365,8 +365,10 @@ def testing():
 
 @app.route("/showimg", methods=['GET', 'POST'])
 def showimg():
-    name = 'yolov3_Mura_LCD4_final.weights-Mura_LCD4___20181205_113259.jpg'
-    return render_template('showimg.html',img=name)
+    image_names = os.listdir('static/Result')
+    print(image_names)
+    return render_template("showimg.html", image_names=image_names)
+   
 
 @app.route("/test", methods=['GET', 'POST'])
 def test():  
