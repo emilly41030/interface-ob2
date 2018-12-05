@@ -11,7 +11,7 @@
     </head>
     <body> 
       {% include '_navbar.html' %}
-      
+      <input hidden type="button" id='tt1' value={{img}}>
     <style>
         img {
                 display: block;
@@ -20,11 +20,10 @@
             }
     </style>
     <script>
-        var t2 = window.setInterval(function (){
-            var img_name = document.getElementById("tt1").value;               
+        var img_name = document.getElementById("tt1").value;               
             $.ajax({
                 cache:false,
-                url:'static/Figure/result/'+img_name,
+                url:'static/Result/'+img_name,
                 success: function(){
                     var img = new Image();
                     img.onload = function () {}
@@ -33,7 +32,6 @@
                     clearInterval(t2);
                 },
             });
-        },3000);    
     </script> 
 
     <div class="container">

@@ -299,7 +299,7 @@ def training():
     file_remove("static/test.txt")
     
     if request.method == 'POST':
-        current = time.strftime("%Y%m%d-%H%M%S", time.localtime())
+        current = time.strftime("%Y%m%d_%H%M%S", time.localtime())
         config.EPOCH = request.form.get('max_batches')
         datasetName = request.form.get('comp1_select')
         config.DATASET_NAME=datasetName          # Mura_LCD4
@@ -326,8 +326,7 @@ def option():
     datasetList = find_dataset()
     if 'backup' in datasetList:
                     datasetList.remove('backup')
-    if request.method == 'POST':
-        
+    if request.method == 'POST':        
         if request.form["btn"] == "Test":
             return render_template('test.html')
         if request.form["btn"] == "Train again":
@@ -345,6 +344,7 @@ def loss_gp():
     
 @app.route("/testing", methods=['GET', 'POST'])
 def testing():
+    file_remove('predictions.jpg')
     create_dir(resultDir)
     print(config.TEST_DATASET)
     dataset = config.TEST_DATASET
@@ -352,11 +352,15 @@ def testing():
     print("dataset = "+dataset)
     wei_file = request.form.get('comp1_select')
     img = request.form.get('comp2_select')
-    print("./darknet detector test scripts/"+dataset+"/voc_"+name[0]+".data scripts/backup/"+dataset+"/"+str(wei_file)+ ' data/'+str(img))
-    p = subprocess.Popen(["./darknet", "detector", "test","scripts/"+dataset+"/voc_"+name[0]+".data","scripts/backup/"+dataset+"/"+str(wei_file), 'data/'+str(img)])
-    time.sleep(2)
-    shutil.move('predictions.jpg', resultDir+"/"+str(wei_file)+'-'+dataset+'.jpg')
-    return render_template("testing.html", img=config.TEST_IMG)
+    print("./darknet detect scripts/"+dataset+"/yolov3_"+name[0]+".cfg scripts/backup/"+dataset+"/"+str(wei_file)+ ' data/'+str(img))
+    p = subprocess.Popen(["./darknet", "detect","scripts/"+dataset+"/yolov3_"+name[0]+".cfg","scripts/backup/"+dataset+"/"+str(wei_file), 'data/'+str(img)])
+    time.sleep(3)
+    while True:
+        if os.path.isfile(os.getcwd()+'/predictions.jpg'):           
+            break;
+    img_name = str(wei_file)+'-'+dataset+'.jpg'
+    shutil.move('predictions.jpg', resultDir+"/"+img_name)
+    return render_template("testing.html", img=img_name)
 
 @app.route("/test", methods=['GET', 'POST'])
 def test():  
@@ -391,7 +395,7 @@ def test():
     for f in dirfiles:
         childtree.append(f)
     if request.method == "POST":        
-        if request.form['del_btn']:
+        if request.form["form_1"] == 'del_btn':            
             backupfiles = os.listdir(backupPath)
             for dirname in backupfiles:     # 存放 weight
                 print(dirname)
@@ -407,15 +411,16 @@ def test():
             error = "Cannot find any backup"
             return render_template('test.html',error=error)
             
-        elif request.form['comp0_select']:            
-            dataset = request.form.get('comp0_select')
+        elif request.form["form_1"]:
+            dataset = request.form.get('form_1')
+            print('dataset = '+str(dataset))
             del childtree
             childtree=[]
             dirfiles = listdir(backupPath+"/"+str(dataset))
             for f in dirfiles:
                 childtree.append(f)
             config.TEST_DATASET=dataset
-
+        
     return render_template('test.html',size_d=size_d, dataset=config.TEST_DATASET,tree=backupDir, childtree=childtree, img=img, error=error)
 
 
