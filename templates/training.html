@@ -67,8 +67,7 @@
                 <label hidden>{{ pid }}</label>
                 <input disabled type="submit" class="btn btn-success" name="btn" id="btn_train" value="Train again"/>
                 <input disabled type="submit" class="btn btn-success" name="btn" id="btn_test" value="Test" />                
-                <input type="hidden" name="tt1" id="tt1" value="{{ img_name }}">
-                <input type="hidden" name="tt2" id="tt2" value="{{ max_batch }}">
+              
                 <div class="page-header">
 
                     <div class="progress">
@@ -92,6 +91,7 @@
                 </div>
             </form>
             <div id="mychart"></div>
+            <div id="mychart2"></div>
             <!-- <script src="static/create-graph.js"></script>            -->
         </div>
         
@@ -100,16 +100,12 @@
         <script type="text/javascript">
             var a= 0;
             filepath = document.getElementById('filepath').value;
-            var file = 'static/task/'+filepath+'/images.json'
-            console.log(file)
-
-            
+            var file1 = 'static/task/'+filepath+'/AvgLoss.json'
+            console.log(file1)
             $(document).ready(function() {
                 $.ajaxSetup({ cache: false });
             });
 
-            img_name = document.getElementById("tt1").value;
-            epoch = document.getElementById("tt2").value;
             var finish = false;
             var is_first = true;           
             var t2 = window.setInterval(()=>{
@@ -130,11 +126,12 @@
                         })
                     },
                 });
-                 $.ajax({
-                    cache:false, 
-                    url:file,                   
+                $.ajax({
+                    cache:false,
+                    url:file1,
                     success: function(){
-                        $.getJSON(file, function (externaldata) {
+                        $.getJSON(file1, function (externaldata) {
+                            console.log(externaldata)
                             if (is_first==true){
                                 chart = c3.generate({
                                 title: {
@@ -149,14 +146,55 @@
                                 is_first = false;
                             }
                             
-                            $.getJSON(file, function (externaldata) {                                    
+                            $.getJSON(file1, function (externaldata) {
                                 chart.load({ json: externaldata} )
                                 chart.flush();
                             });
                         })
                     },
                 });
-            }, 3000);
+
+                var file2 = 'static/task/'+filepath+'/IOU.json'
+                $.ajax({
+                    cache:false,
+                    url:file2,
+                    success: function(){
+                        // $.getJSON(file, function (externaldata) {
+                        //     console.log(externaldata)
+                        //     if (is_first==true){
+                        //         chart2 = c3.generate({
+                        //         title: {
+                        //             text:'External JSON loading via C3.js'
+                        //         },
+                        //         bindto: '#mychart2',
+                        //         data: {
+                        //             json: externaldata,
+                        //             type: 'area-spline',
+                        //         }                        
+                        //         });
+                        //         is_first = false;
+                        //     }
+                            
+                        //     $.getJSON(file, function (externaldata) {
+                        //         chart2.load({ json: externaldata} )
+                        //         chart2.flush();
+                        //     });
+                        // })
+
+
+                        // chart2 = c3.generate({
+                        //         bindto: '#mychart2',
+                        //         data: {
+                        //             columns:[
+                        //                 ['avg_loss', 150, 300, 200, 100, 200,],
+                        //                 ['IOU', 150, 300, 200, 100, 200,]
+                        //                 ]
+                        //            }
+                        //         });
+                            
+                    },
+                });
+            }, 5000);
         
           </script>
     </body>
