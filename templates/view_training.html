@@ -20,9 +20,9 @@
             </div>
             {% endif %}
             <form action="{{ url_for('view_training') }}" method="post">  
-                <div class="form-group">
+                <div class="form-group" style="width:700px;">
                     <label for="FormControlSelect0">Choose Pretrain Model: </label>
-                    <select size="{{size_d}}" name="comp0_select" id="comp0_select" value="comp0_select" onchange="this.form.submit()" class="form-control" id="FormControlSelect0">
+                    <select size="{{size_d}}" name="comp0_select" id="comp0_select" value="comp0_select" onchange="this.form.submit()" class="form-control"  id="FormControlSelect0">
                         {%- for item in tree recursive %}
                             {% if item == dataset  %}
                                 <option selected="selected">{{ dataset }}</option>
@@ -31,29 +31,39 @@
                             {%- endif %}
                         {%- endfor %}
                     </select>
-            </form>
-            <div id="mychart"></div>
+            </form>            
         </div>
+        <button type="submit" class="btn btn-primary" id="edit_btn" name="edit_btn" value="edit_btn">Edit</button>
+        <div id="mychart"></div>
+        <div id="mychart2"></div>
         <script>
             filepath = document.getElementById('comp0_select').value
             var file = 'static/task/'+filepath+'/AvgLoss.json'
             $.getJSON(file, function (externaldata) {
-            var chart = c3.generate({
-                title: {
-                    text:'External JSON loading via C3.js'
-                },
-                bindto: '#mychart',
-                data: {
-                   json: externaldata,
-                    type: 'area-spline',
-                }
-            });
+                var chart = c3.generate({
+                    title: {
+                        text:'External JSON loading via C3.js'
+                    },
+                    bindto: '#mychart',
+                    data: {
+                    json: externaldata,
+                        type: 'area-spline',
+                    }
+                });
+            })
+            var file2 = 'static/task/'+filepath+'/IOU.json'
+            $.getJSON(file2, function (externaldata2) {
+                var chart = c3.generate({
+                    bindto: '#mychart2',
+                    data: {
+                    json: externaldata2,
+                        type: 'area-spline',
+                    }
+                });
             })
             $(document).ready(function() {
                 $.ajaxSetup({ cache: false });
             });
-            
-            
             </script>
 
         <style>
