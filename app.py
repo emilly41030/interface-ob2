@@ -239,7 +239,7 @@ def write_log(datasetName, current, paras):
     add_class('data/voc_'+datasetName+'.names')       
     classes_size=str(len(classes))
     os.mkdir("scripts/"+datasetName+"___"+current)
-
+    file_remove("static/test.txt")
     # 寫 yolov3_voc.cfg 檔案
     subprocess.Popen(["python", "read_reversed.py",classes_size]+paras)
     #  寫 .data 檔
@@ -262,51 +262,63 @@ def write_log(datasetName, current, paras):
     p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , "darknet53.conv.74"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     config.PID = p.pid
     config.LIST_PID.append(p.pid)
-    
-    
+
     for line in p.stdout:
         sys.stdout.write(line)
         logfile.write(line)    
     print ('write_log finish')
+
     with open("static/test.txt", "w+") as f:
         f.write("")
+
+def write_file(log_path, result_dir):
+    avg_loss=[]
+    iou = []
+    with open(result_dir + '/IOU.json', 'w+') as outfile2:
+        with open(result_dir + '/AvgLoss.json', 'w+') as outfile:
+            with open(log_path, 'r') as f:
+                    next_skip = False
+                    for line in f:
+                        if next_skip:
+                            next_skip = False
+                            continue
+                        # 去除多gpu的同步log
+                        if 'Syncing' in line:
+                            continue
+                        # 去除除零错误的log
+                        if 'nan' in line:
+                            continue
+                        if 'Saving weights to' in line:
+                            next_skip = True
+                            continue
+                        if "images" in line:                           
+                            avg_loss.append(float(line.split(' ')[2]))
+                        elif "IOU" in line:
+                            iou.append(float(line.split(' ')[4].split(',')[0]))
+            data = {"avg_loss":avg_loss}
+            json.dump(data, outfile)
+            data = {"IOU":iou}
+            json.dump(data, outfile2)
 
 def extract_log(datasetName, current):
     time.sleep(10)
     log_path = 'scripts/'+datasetName+"___"+current+'/log/logfile.log'
+   
     result_dir = 'static/task/'+datasetName+"___"+current
     create_dir('static/task/')
     create_dir(result_dir)
-    while (check_pid(config.PID)):
-        print("config.pid=" + str(config.PID))
-        avg_loss=[]
-        iou = []
-        with open(result_dir + '/IOU.json', 'w+') as outfile2:
-            with open(result_dir + '/AvgLoss.json', 'w+') as outfile:
-                with open(log_path, 'r') as f:
-                        next_skip = False
-                        for line in f:
-                            if next_skip:
-                                next_skip = False
-                                continue
-                            # 去除多gpu的同步log
-                            if 'Syncing' in line:
-                                continue
-                            # 去除除零错误的log
-                            if 'nan' in line:
-                                continue
-                            if 'Saving weights to' in line:
-                                next_skip = True
-                                continue
-                            if "images" in line:                           
-                                avg_loss.append(float(line.split(' ')[2]))
-                            elif "IOU" in line:
-                                iou.append(float(line.split(' ')[4].split(',')[0]))
-                data = {"avg_loss":avg_loss}
-                json.dump(data, outfile)
-                data = {"IOU":iou}
-                json.dump(data, outfile2)
+    log_size = 1               #紀錄 log 檔案有沒有變化
+    print("~~~~~~~~~~")
+    print()
+    print("~~~~~~~~~~")
+    while not (os.path.isfile("static/test.txt")):
+        print("config.pid=" + str(config.PID))       
+        if (log_size != os.path.getsize(log_path) and os.path.getsize(log_path) != 0):
+            print("log_size="+str(log_size))
+            log_size = os.path.getsize(log_path)
+            write_file(log_path, result_dir)
         time.sleep(5)
+    write_file(log_path, result_dir)
     print("extract_log finish !!!!!")
 
 @app.route('/index')
@@ -395,8 +407,11 @@ def view_training():
     if len(backupDir)==0:
         error = "Cannot find any backup"
         return render_template('view_training.html',error=error)
-    print(backupDir[0])
-    return render_template('view_training.html',size_d=5,tree=backupDir, error=error, dataset=backupDir[0])
+    config.TEST_DATASET = backupDir[0]
+    if request.method == "POST":
+            config.TEST_DATASET = request.form.get('comp0_select')
+            print(request.form.get('comp0_select'))
+    return render_template('view_training.html',size_d=5,tree=backupDir, error=error, dataset=config.TEST_DATASET)
 
 @app.route("/showimg", methods=['GET', 'POST'])
 def showimg():
