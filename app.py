@@ -14,6 +14,7 @@ import signal
 import sys
 import shutil
 import pandas as pd
+import json
 
 # App config.
 DEBUG = True
@@ -270,22 +271,43 @@ def write_log(datasetName, current, paras):
     with open("static/test.txt", "w+") as f:
         f.write("")
 
-def draw_loss(datasetName, current):
+def extract_log(datasetName, current):
     time.sleep(10)
+    log_path = 'scripts/'+datasetName+"___"+current+'/log/logfile.log'
+    result_dir = 'static/task/'+datasetName+"___"+current
+    create_dir('static/task/')
+    create_dir(result_dir)
     while (check_pid(config.PID)):
         print("config.pid=" + str(config.PID))
-        print("draw~~~~~~~ start ~~~~~~~~~~")
-        log_path = 'scripts/'+datasetName+"___"+current+'/log/logfile.log'
-        create_dir('static/task/')
-        result_dir = 'static/task/'+datasetName+"___"+current
-        create_dir(result_dir)
-        print('python draw_log.py '+log_path+" "+result_dir)
-        p = subprocess.Popen(['python','draw_log.py',log_path, result_dir])
-        # subprocess.Popen(['rm', 'static/train_log_loss.txt'])
-        # subprocess.call(["ln","-s",'scripts/'+datasetName+"___"+current+'/train_log_loss.txt', 'static/train_log_loss.txt'])
-        print("draw~~~~~~~ end ~~~~~~~~~~")
+        avg_loss=[]
+        iou = []
+        with open(result_dir + '/IOU.json', 'w+') as outfile2:
+            with open(result_dir + '/AvgLoss.json', 'w+') as outfile:
+                with open(log_path, 'r') as f:
+                        next_skip = False
+                        for line in f:
+                            if next_skip:
+                                next_skip = False
+                                continue
+                            # 去除多gpu的同步log
+                            if 'Syncing' in line:
+                                continue
+                            # 去除除零错误的log
+                            if 'nan' in line:
+                                continue
+                            if 'Saving weights to' in line:
+                                next_skip = True
+                                continue
+                            if "images" in line:                           
+                                avg_loss.append(float(line.split(' ')[2]))
+                            elif "IOU" in line:
+                                iou.append(float(line.split(' ')[4].split(',')[0]))
+                data = {"avg_loss":avg_loss}
+                json.dump(data, outfile)
+                data = {"IOU":iou}
+                json.dump(data, outfile2)
         time.sleep(5)
-    print("draw finish !!!!!")
+    print("extract_log finish !!!!!")
 
 @app.route('/index')
 def index():
@@ -314,7 +336,7 @@ def training():
 
         Thread1=threading.Thread(target=write_log, args=(datasetName, current, paras))
         Thread1.start()       
-        Thread2=threading.Thread(target=draw_loss, args=(datasetName, current))
+        Thread2=threading.Thread(target=extract_log, args=(datasetName, current))
         Thread2.start()
         time.sleep(1)
         filepath = datasetName+"___"+current
@@ -363,12 +385,25 @@ def testing():
     time.sleep(3)
     return render_template("testing.html", img=img_name)
 
+@app.route("/view_training", methods=['GET', 'POST'])
+def view_training():
+    backupDir=[]
+    error=None
+    backupfiles = listdir(backupPath)
+    for f in backupfiles:
+        backupDir.append(f)
+    if len(backupDir)==0:
+        error = "Cannot find any backup"
+        return render_template('view_training.html',error=error)
+    print(backupDir[0])
+    return render_template('view_training.html',size_d=5,tree=backupDir, error=error, dataset=backupDir[0])
+
 @app.route("/showimg", methods=['GET', 'POST'])
 def showimg():
     image_names = os.listdir('static/Result')
     print(image_names)
     return render_template("showimg.html", image_names=image_names)
-   
+
 
 @app.route("/test", methods=['GET', 'POST'])
 def test():  
@@ -384,8 +419,8 @@ def test():
     for f in imgfiles:
         if os.path.splitext(f)[-1] in [".png", ".jpg"]:
             img.append(f)
-    if len(backupDir) > 3:
-        size_d = 3
+    if len(backupDir) > 5:
+        size_d = 5
     elif len(backupDir)==0:
         error = "Cannot find any backup"        
         return render_template('test.html',error=error)
