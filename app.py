@@ -189,8 +189,8 @@ def ImportDataset():
        
         print(cmd_1)
         print(cmd_2)
-        subprocess.call(cmd_1)
-        subprocess.call(cmd_2)
+        subprocess.Popen(['ln','-sf',OriginImgPath,ImagesPath])
+        subprocess.Popen(['ln','-sf',OriginLabelPath,LabelPath])
         file_remove(newPath+"/"+secName+"/ImageSets/Main/train.txt")
         file_remove(newPath+"/"+secName+"/ImageSets/Main/val.txt")
 
