@@ -14,6 +14,9 @@
         form label {
             width: 15%;
         }
+        form button {
+            padding:2cm;
+        }
     </style>
     <body>
         {% include '_navbar.html' %}
@@ -38,14 +41,14 @@
                         {%- endfor %}
                     </select>
                     
-                        <label for="FormControlSelect1">Choose weights: </label>
+                        <!-- <label for="FormControlSelect1">Choose weights: </label>
                         <select name="comp1_select" class="form-control" id="FormControlSelect1">
                                 {%- for item in childtree recursive %}
-                                        <option>{{ item }} </option>
+                                        <option>{{ item }} </option>pro
                                 {%- endfor %}
-                        </select>
-                    </div>
-                     <button type="submit" class="btn btn-primary" name="btn" id="test_start_btn" >Start</button>
+                        </select> -->
+                   
+                    <!-- <button type="submit" class="btn btn-primary" name="btn" id="pretrain_btn" >Make a pre-train model</button> -->
                 </form>
                 
             </div>

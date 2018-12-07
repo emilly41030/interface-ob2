@@ -39,7 +39,7 @@ def create_dir(path):
 create_dir(backupPath)
 create_dir(datasetPath)
 create_dir("static")
-
+create_dir(resultDir)
 
 def check_dir_notzero(path):
     if os.path.isdir(path):
@@ -329,7 +329,9 @@ pid = 12
 def training():
     paras = []    
     file_remove("static/test.txt")
-    
+    if not os.path.isfile('darknet53.conv.74'):
+        subprocess.Popen(['wget','https://pjreddie.com/media/files/darknet53.conv.74'])
+        
     if request.method == 'POST':
         current = time.strftime("%Y%m%d_%H%M%S", time.localtime())
         config.EPOCH = request.form.get('max_batches')
@@ -410,35 +412,6 @@ def view_training():
     if request.method == "POST":
             config.TEST_DATASET = request.form.get('comp0_select')
             print(request.form.get('comp0_select'))
-
-    # if request.method == "POST":
-    #     if request.form["form_1"] == 'del_btn':            
-    #         backupfiles = os.listdir(backupPath)
-    #         for dirname in backupfiles:     # 存放 weight
-    #             print(dirname)
-    #             shutil.rmtree(backupPath+'/'+dirname, ignore_errors=True)
-    #         file = os.listdir('scripts')  # 存放 log .data .cfg
-    #         for dirname in file:
-    #             if not dirname=='backup':
-    #                 shutil.rmtree('scripts/'+dirname, ignore_errors=True)      
-    #         file = os.listdir('static/task')  # 存放 log .data .cfg
-    #         for dirname in file:
-    #             shutil.rmtree('static/task/'+dirname, ignore_errors=True)
-            
-    #         error = "Cannot find any backup"
-    #         return render_template('test.html',error=error)
-            
-    #     elif request.form["comp_select"]:
-    #         dataset = request.form.get('form_1')
-    #         print('dataset = '+str(dataset))
-    #         del childtree
-    #         childtree=[]
-    #         dirfiles = listdir(backupPath+"/"+str(dataset))
-    #         for f in dirfiles:
-    #             childtree.append(f)
-    #         config.TEST_DATASET=dataset
-            
-
 
     return render_template('view_training.html',size_d=2,tree=backupDir, error=error, dataset=config.TEST_DATASET)
 
