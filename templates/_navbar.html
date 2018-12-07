@@ -1,10 +1,5 @@
-<script language="JavaScript" type="text/JavaScript">
-    function Login_Win(theURL,winName,features) { //v2.0
-      window.open('login.html','Login','width=700,height=300');
-    }
-</script>
 
-<nav class="navbar navbar-default">
+<!-- <nav class="navbar navbar-default">
     <div class="container">
       <div class="navbar-header">
         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
@@ -24,15 +19,96 @@
           <li><a href="/showimg">Test Result</a></li>
           <li><a href="/view_training">Train Result</a></li>
 
-          <!-- <li><a href="/dirtree">dirtree</a></li> -->
+          
           
         </ul>
         
         <ul class="nav navbar-nav navbar-right">
-            <!-- <li><a href="/register">Register</a></li> -->
-            <li><a>Training <span class="badge"> 0</span></a></li>
+          <li><a>Training <span class="badge"> 0</span></a></li>
         </ul>
-      </div><!--/.nav-collapse -->
+      </div>
       
     </div>
-</nav>
+</nav> -->
+
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="static/VisionAtics.png">
+    <title>Vision Atics Deep Learning</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="static/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="static/dashboard.css" rel="stylesheet">
+  </head>
+<script src="https://unpkg.com/feather-icons"></script>
+<body>
+    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Vision Atics</a>
+      <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search">
+      <ul class="navbar-nav px-3">
+        <li class="nav-item text-nowrap">
+          <a class="nav-link" href="#">Sign out</a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+          <div class="sidebar-sticky">
+            <ul class="nav flex-column">
+              <li class="nav-item">
+                <a class="nav-link active" href="/">
+                  <span data-feather="home"></span>
+                  Home <span class="sr-only"></span>
+                </a>                
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/dataset">
+                  <span data-feather="folder"></span>
+                  Dataset
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/train">
+                  <span data-feather="activity"></span>
+                  Train
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/test">
+                <span data-feather="activity"></span>                
+                  Test
+                </a>
+              </li>             
+              <li class="nav-item">                
+                <a class="nav-link" href="/view_training">
+                  <span data-feather="folder"></span>
+                Train Model
+              </a>
+                
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="/showimg">
+                  <span data-feather="folder"></span>
+                Test Result
+              </a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </div>
+    </div>
+    <script>
+      feather.replace()      
+</script> 
+</body>

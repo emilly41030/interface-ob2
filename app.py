@@ -308,9 +308,7 @@ def extract_log(datasetName, current):
     create_dir('static/task/')
     create_dir(result_dir)
     log_size = 1               #紀錄 log 檔案有沒有變化
-    print("~~~~~~~~~~")
-    print()
-    print("~~~~~~~~~~")
+   
     while not (os.path.isfile("static/test.txt")):
         print("config.pid=" + str(config.PID))       
         if (log_size != os.path.getsize(log_path) and os.path.getsize(log_path) != 0):
@@ -352,6 +350,7 @@ def training():
         Thread2.start()
         time.sleep(1)
         filepath = datasetName+"___"+current
+    # filepath = "Mura_LCD4___20181206_112804"
     return render_template("training.html", pid=config.PID, paras=paras, filepath=filepath)
     
 @app.route("/option", methods=['GET', 'POST'])
@@ -411,12 +410,41 @@ def view_training():
     if request.method == "POST":
             config.TEST_DATASET = request.form.get('comp0_select')
             print(request.form.get('comp0_select'))
-    return render_template('view_training.html',size_d=5,tree=backupDir, error=error, dataset=config.TEST_DATASET)
+
+    # if request.method == "POST":
+    #     if request.form["form_1"] == 'del_btn':            
+    #         backupfiles = os.listdir(backupPath)
+    #         for dirname in backupfiles:     # 存放 weight
+    #             print(dirname)
+    #             shutil.rmtree(backupPath+'/'+dirname, ignore_errors=True)
+    #         file = os.listdir('scripts')  # 存放 log .data .cfg
+    #         for dirname in file:
+    #             if not dirname=='backup':
+    #                 shutil.rmtree('scripts/'+dirname, ignore_errors=True)      
+    #         file = os.listdir('static/task')  # 存放 log .data .cfg
+    #         for dirname in file:
+    #             shutil.rmtree('static/task/'+dirname, ignore_errors=True)
+            
+    #         error = "Cannot find any backup"
+    #         return render_template('test.html',error=error)
+            
+    #     elif request.form["comp_select"]:
+    #         dataset = request.form.get('form_1')
+    #         print('dataset = '+str(dataset))
+    #         del childtree
+    #         childtree=[]
+    #         dirfiles = listdir(backupPath+"/"+str(dataset))
+    #         for f in dirfiles:
+    #             childtree.append(f)
+    #         config.TEST_DATASET=dataset
+            
+
+
+    return render_template('view_training.html',size_d=2,tree=backupDir, error=error, dataset=config.TEST_DATASET)
 
 @app.route("/showimg", methods=['GET', 'POST'])
 def showimg():
     image_names = os.listdir('static/Result')
-    print(image_names)
     return render_template("showimg.html", image_names=image_names)
 
 
@@ -452,8 +480,10 @@ def test():
     
     for f in dirfiles:
         childtree.append(f)
-    if request.method == "POST":        
-        if request.form["form_1"] == 'del_btn':            
+    if request.method == "POST":
+        if request.form["form_1"] == 'del_btn':
+            print(request.form["form_1"])
+            print('del')
             backupfiles = os.listdir(backupPath)
             for dirname in backupfiles:     # 存放 weight
                 print(dirname)
@@ -470,6 +500,8 @@ def test():
             return render_template('test.html',error=error)
             
         elif request.form["form_1"]:
+            print(request.form["form_1"])
+            print('change')
             dataset = request.form.get('form_1')
             print('dataset = '+str(dataset))
             del childtree

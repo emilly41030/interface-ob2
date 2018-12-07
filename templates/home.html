@@ -10,55 +10,11 @@
     </head>
     <body>
       {% include '_navbar.html' %}
-      <script type="text/javascript">
-         onReady('#chart', function() {
-           var chart = c3.generate({
-             data: {
-               columns: [
-                 ['loss', 300, 350, 300, 0, 0, 0],
-                 ['IOU', 130, 100, 140, 200, 150, 50]
-               ],
-               types: {
-                  loss: 'area',
-                  IOU: 'area-spline'
-               }
-             },
-             axis: {
-               y: {
-                 padding: {
-                   bottom: 0
-                 },
-                 min: 0
-               },
-               x: {
-                 padding: {
-                   left: 0
-                 },
-                 min: 0,
-                 show: false
-               }
-             }
-           });
-         });
-         
-         // Set a timeout so that we can ensure that the `chart` element is created.
-         function onReady(selector, callback) {
-           var intervalID = window.setInterval(function() {
-             if (document.querySelector(selector) !== undefined) {
-               window.clearInterval(intervalID);
-               callback.call(this);
-             }
-           }, 500);
-         }
-       </script>
-      <div class="container">          
-         <h2>YOLO v3</h2>
-         <form>  
-               <h1>Welcome</h1>
-               
-         </form> 
-         <div id="chart"></div>
-              
-      </div>
+      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+        <br>
+        <div class="container">
+           <h2>YOLO v3</h2>
+        </div>
+      </main>
    </body>
 </html>
