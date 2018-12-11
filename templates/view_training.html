@@ -46,7 +46,7 @@
                 <h2>YOLO v3</h2>
                     <form action="{{ url_for('view_training') }}" method="post">  
                         <!-- <label for="FormControlSelect0">Choose Pretrain Model: </label> -->
-                            <select size="30" name="comp0_select" id="comp0_select" value="comp0_select" onchange="this.form.submit()" class="form-control"  id="FormControlSelect0">
+                            <select multiple size="30" name="comp0_select" id="comp0_select" value="comp0_select" onchange="this.form.submit()" class="form-control"  id="FormControlSelect0">
                             {%- for item in tree recursive %}
                                 {% if item == dataset  %}
                                     <option selected="selected">{{ dataset }}</option>
@@ -55,8 +55,9 @@
                                 {%- endif %}
                             {%- endfor %}
                         </select>                        
-                        <!-- <button type="submit" class="btn btn-primary" name="btn" id="pretrain_btn" >Make a pre-train model</button> -->
                     </form>
+                    <br>
+                   <!-- <input type="button" class="btn btn-primary" id="edit" value="Edit" name="btn" onclick="del_btn()">-->
                 </div>
                
                 <!-- <button type="submit" class="btn btn-primary" id="edit_btn" name="edit_btn" value="edit_btn">Edit</button> -->
@@ -96,9 +97,19 @@
                 }
             });
         })
-        $(document).ready(function() {
-            $.ajaxSetup({ cache: false });
+        $('#myonoffswitch').click(function(){
+        $('.tab').hide();
+        if($('#myonoffswitch').attr('checked') == "checked")
+        {
+           $('#yes').show();  
+        }
+        else
+        {
+            $('#no').show();
+        }
+        //alert($('#myonoffswitch').attr('checked'));
         });
+       
     </script>
 
     <style>

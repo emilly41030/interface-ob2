@@ -82,7 +82,7 @@ def ImportDataset():
         print("classes = "+str(classes))
        
         # 將資料集路徑的捷徑建立到 dataset/
-        newPath = datasetPath+datasetName+'/'+firName       
+        newPath = datasetPath+datasetName+'/'+firName
         ImagesPath = os.getcwd()+'/'+newPath + "/"+ secName +'/JPEGImages'
         LabelPath = os.getcwd()+'/'+newPath + "/"+ secName +'/Annotations'
         function.create_dir(os.getcwd()+'/'+newPath)

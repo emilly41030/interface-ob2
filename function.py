@@ -55,7 +55,6 @@ def voc_label(source_folder, datasetName, classes):
     for ID, image_set in sets:
         if not os.path.exists(os.path.dirname(source_folder)+'/labels/'):
             os.makedirs(os.path.dirname(source_folder)+'/labels/')
-        img_format = datasetName
         image_ids = open(os.path.dirname(source_folder)+'/ImageSets/Main/%s.txt'%(image_set)).read().strip().split()
         for image_id in image_ids:
             convert_annotation(ID, image_id, source_folder, classes)
@@ -178,12 +177,13 @@ def create_listName(source_folder):
     fully_val_file.close()
 
 def write_log(datasetName, current, paras, classes, config, datasetPath, backupPath):
-    add_class('data/voc_'+datasetName+'.names', classes)       
+    add_class('data/voc_'+datasetName+'.names', classes)    
     classes_size=str(len(classes))
     os.mkdir("scripts/"+datasetName+"___"+current)
     file_remove("static/test.txt")
     # 寫 yolov3_voc.cfg 檔案
-    subprocess.Popen(["python", "read_reversed.py",classes_size]+paras)
+    read_reversed(classes_size, paras)
+    # subprocess.Popen(["python", "read_reversed.py",classes_size]+paras)
     #  寫 .data 檔
     cfg_set = "scripts/"+datasetName+"___"+current+"/voc_"+datasetName+".data"
     copyfile(datasetPath+datasetName+"/voc_"+datasetName+".data", cfg_set)
@@ -265,3 +265,60 @@ def extract_log(datasetName, current, config):
         time.sleep(5)
     write_file(log_path, result_dir)
     print("extract_log finish !!!!!")
+
+
+def read_reversed(classes, paras):    
+    datasetName = paras[0]
+    max_batches = paras[1]
+    learning_rate = paras[2]
+    batch = paras[3]
+    subdivisions = paras[4]
+    current = paras[5]
+    print(paras)
+    cfg_yolo = 'scripts/'+datasetName+"___"+current+'/yolov3_'+datasetName+'.cfg'
+    print("!!!!!!!!!!!!" + str(classes))
+    replace_count=[]
+    count=0
+    is_train=0
+    temp = 'scripts/'+datasetName+"___"+current+'/cfg_temp.cfg'
+    copyfile('cfg/yolov3-voc.cfg', cfg_yolo)
+    with open(cfg_yolo, 'r') as fr:    
+        with open(temp, 'w+') as fw:
+            for lines in fr:
+                count+=1
+                if "#" in lines:
+                    fw.write(lines)                   
+                elif "classes" in lines:
+                    fw.write("classes="+classes+"\n")
+                elif "max_batches" in lines:
+                    fw.write('max_batches='+max_batches+'\n')                   
+                elif "learning_rate" in lines:
+                    fw.write('learning_rate='+learning_rate+'\n')                   
+                elif "batch=" in lines:
+                    fw.write('batch='+batch+'\n')                  
+                elif "subdivisions" in lines:
+                    fw.write('subdivisions='+subdivisions+'\n')
+                else:
+                    fw.write(lines)
+
+    yolo_t = False
+    # for line in reversed(cfg_yolo.readlines()):   #python2
+    for line in reversed(list(open(cfg_yolo))):
+        if 'yolo' in line.rstrip():
+            yolo_t = True
+        if 'filters' in line.rstrip() and yolo_t is True:
+            replace_count.append(count)
+            yolo_t=False
+        count-=1
+
+
+    with open(temp, 'r') as fr:
+        with open(cfg_yolo, 'w+') as fw:
+            for lines in fr:
+                if count+1 in replace_count:                
+                    filter_num = 3*(int(classes)+5)
+                    fw.write("filters="+str(filter_num)+'\n')
+                else:
+                    fw.write(lines)
+                count+=1
+    os.remove(temp)

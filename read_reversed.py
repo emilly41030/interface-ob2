@@ -2,20 +2,22 @@ import os
 from shutil import copyfile
 import sys
 
-datasetName = sys.argv[2]
-max_batches = sys.argv[3]
-learning_rate = sys.argv[4]
-batch = sys.argv[5]
-subdivisions = sys.argv[6]
-current = sys.argv[7]
+# datasetName = sys.argv[2]
+# max_batches = sys.argv[3]
+# learning_rate = sys.argv[4]
+# batch = sys.argv[5]
+# subdivisions = sys.argv[6]
+# current = sys.argv[7]
 
-cfg_yolo = 'scripts/'+datasetName+"___"+current+'/yolov3_'+datasetName+'.cfg'
-classes = sys.argv[1]
-
+# cfg_yolo = 'scripts/'+datasetName+"___"+current+'/yolov3_'+datasetName+'.cfg'
+cfg_yolo = '/home/kelly/Desktop/interface-ob2/scripts/Mura_LCD4___20181211_133804'+'/yolov3_Mura_LCD4.cfg'
+ # classes = sys.argv[1]
+classes = 2
 replace_count=[]
 count=0
 is_train=0
-temp = 'scripts/'+datasetName+"___"+current+'/cfg_temp.cfg'
+# temp = 'scripts/'+datasetName+"___"+current+'/cfg_temp.cfg'
+temp = 'scripts/Mura_LCD4___20181211_133804/cfg_temp.cfg'
 copyfile('cfg/yolov3-voc.cfg', cfg_yolo)
 with open(cfg_yolo, 'r') as fr:    
     with open(temp, 'w+') as fw:
