@@ -136,3 +136,9 @@ div.form-group{
 .btn{
   font-size: 14px;
 }
+
+.col-2 {
+ -ms-flex:0 0 16.666667%;
+ flex:0 0 16.666667%;
+ max-width:10.666667%
+}

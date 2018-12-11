@@ -4,7 +4,6 @@ from flask import Flask, render_template, flash, request, redirect, session, abo
 from wtforms import Form, TextField, TextAreaField, validators, StringField
 from flask_wtf import FlaskForm
 import os
-from shutil import copyfile
 from os import listdir
 import configure as config
 import threading
@@ -13,8 +12,8 @@ import time
 import signal
 import sys
 import shutil
-import pandas as pd
-import json
+import function
+from shutil import copyfile
 
 # App config.
 DEBUG = True
@@ -32,97 +31,17 @@ backupPath = 'scripts/backup'
 recordPath = "static/record.txt"
 resultDir = 'static/Result'
 
-def create_dir(path):
-    if not os.path.isdir(path):
-        os.mkdir(path)
-
-create_dir(backupPath)
-create_dir(datasetPath)
-create_dir("static")
-create_dir(resultDir)
-
-def check_dir_notzero(path):
-    if os.path.isdir(path):
-        f = os.listdir(path)
-        if len(f) == 0:
-            return False
-        else: 
-            return True
-    else:
-        return False
-
-def read_record():
-    if os.path.isfile(recordPath):
-        with open(recordPath, "r") as f:
-            for lines in f.readlines():
-                if "dataset" in lines:
-                    config.DATASET_NAME = lines.split(':')[-1].strip()
-                    print(config.DATASET_NAME)
-                elif "cfg_setdata" in lines:
-                    config.CFG_DATA = lines.split(":")[-1].strip()
-                elif "cfg_yolo" in lines:
-                    config.CFG_YOLO = lines.split(":")[-1].strip()
-                elif "classNamePath" in lines:
-                    config.CLASSPATH = lines.split(":")[-1].strip()
-
-def close_pid(pid):    
-    os.kill(int(pid), signal.SIGKILL)
-    print("kill "+str(pid)+"!!!!!")    
-
-def get_pid(name):
-    return subprocess.check_output(["pidof",name])
-
-def check_pid(pid): 
-    try:
-        os.kill(pid, 0)
-    except OSError:
-        return False
-    else:
-        return True
-
-def file_remove(file_path):
-    if os.path.isfile(file_path):
-        os.remove(file_path)
-        print("remove "+file_path)
-    else:
-        print("File doesnot exist: "+file_path)
-
-def add_class(classNamePath):
-    try:
-        del classes[:]
-        with open(classNamePath, 'r') as f:
-                for line in f: 
-                    if not line=="":
-                        line = line.strip() #濾除空白、換行之類的特出符號
-                        classes.append(line)
-        if "" in classes:
-            classes.remove("")
-        print("add_class = "+str(classes))
-    except:
-        return "class import error"
-
 @app.route('/process', methods=['POST'])
 def pid_process():
     train_task=0
     if len(config.LIST_PID) != 0:
         for num in config.LIST_PID:
-            exist_task = check_pid(num)
+            exist_task = function.check_pid(num)
             if exist_task:
                 train_task+=1
             return jsonify({'task': train_task})
     return jsonify({'error':'No training task'})
 
-def find_dataset():
-    datasetList=[]
-    files = os.listdir(datasetPath)  
-    for f in files:
-        fullpath = os.path.join(datasetPath, f)   
-        if os.path.isdir(fullpath):
-            datasetList.append(f)
-    return datasetList
-
-
-    
 @app.route('/')
 def home():
     return render_template('home.html')
@@ -143,7 +62,7 @@ def ImportDataset():
         firName = OriginImgPath.split('/')[-3]    # firName = Mura
         secName = OriginImgPath.split('/')[-2]    # secName = LCD4
         #os.path.dirname(os.path.dirname(datasetPath))  擷取 JPEGImages 上上層 /home/kelly/data/Dataset/Mura
-        create_dir(datasetPath+datasetName)        
+        function.create_dir(datasetPath+datasetName)        
         if os.path.isdir(datasetPath+datasetName+'/'+firName):
             shutil.rmtree(datasetPath+datasetName+'/'+firName, ignore_errors=True)
 
@@ -153,182 +72,80 @@ def ImportDataset():
         config.CLASSPATH = classNamePath
         
         try:
-            file_remove(classNamePath)
+            function.file_remove(classNamePath)
             del classes[:]
             with open(classNamePath,'w+') as f:
                 f.write(str(class_temp))
-            add_class(classNamePath)
+            function.add_class(classes, classNamePath)
         except:          
             return ".names 寫檔錯誤!!!"        
         print("classes = "+str(classes))
-        ###############################
-
-        # print(datasetPath+'Creat_listName.py')
-        if not os.path.isfile(datasetPath+'Creat_listName.py'):
-            if os.path.isfile('Creat_listName.py'):
-                copyfile('Creat_listName.py', datasetPath+'Creat_listName.py')
-            elif os.path.isfile('python/Creat_listName.py'):
-                copyfile('python/Creat_listName.py', datasetPath+'Creat_listName.py')
-            else:
-                return "No such file: Creat_listName.py"
-           
+       
         # 將資料集路徑的捷徑建立到 dataset/
-        newPath = datasetPath+datasetName+'/'+firName
-        print("newPath = "+str(newPath))
-        print("OriginImgPath" + str(OriginImgPath))
+        newPath = datasetPath+datasetName+'/'+firName       
         ImagesPath = os.getcwd()+'/'+newPath + "/"+ secName +'/JPEGImages'
         LabelPath = os.getcwd()+'/'+newPath + "/"+ secName +'/Annotations'
-        create_dir(os.getcwd()+'/'+newPath)
-        create_dir(os.getcwd()+'/'+newPath + "/"+ secName)
+        function.create_dir(os.getcwd()+'/'+newPath)
+        function.create_dir(os.getcwd()+'/'+newPath + "/"+ secName)
         cmd_1 = " ln -sf "+OriginImgPath+" "+ImagesPath
         cmd_2 = " ln -sf "+OriginLabelPath+" "+LabelPath
-        if not check_dir_notzero(OriginImgPath):
+        if not function.check_dir_notzero(OriginImgPath):
             return "Error: "+str(OriginImgPath)
-        if not check_dir_notzero(OriginLabelPath):
+        if not function.check_dir_notzero(OriginLabelPath):
             return "Error: "+str(OriginLabelPath)
        
         print(cmd_1)
         print(cmd_2)
         subprocess.Popen(['ln','-sf',OriginImgPath,ImagesPath])
         subprocess.Popen(['ln','-sf',OriginLabelPath,LabelPath])
-        file_remove(newPath+"/"+secName+"/ImageSets/Main/train.txt")
-        file_remove(newPath+"/"+secName+"/ImageSets/Main/val.txt")
+        function.file_remove(newPath+"/"+secName+"/ImageSets/Main/train.txt")
+        function.file_remove(newPath+"/"+secName+"/ImageSets/Main/val.txt")
 
         # 將 JPEGImages 的圖片寫入 /ImageSets/Main/train.txt、val.txt
-        p1=subprocess.Popen(["python",datasetPath+"Creat_listName.py",ImagesPath])     
-        print(datasetPath+"voc_"+datasetName+".data")
+        function.create_listName(ImagesPath)
         print("Creat_listName finish")
         
         # voc_label_Mura.py  創建 訓練、驗證完整的路徑檔案 scripts/xxx_train.txt、xxx_val.txt，
-        #                    產生 label 資料夾
-        if not os.path.isfile(datasetPath+'voc_label.py'):
-            if os.path.isfile('voc_label.py'):
-                copyfile('voc_label.py', datasetPath+'voc_label.py')
-            elif os.path.isfile('python/voc_label.py'):
-                copyfile('python/voc_label.py', datasetPath+'voc_label.py')
-            else:
-                return "No such file: voc_label.py"
-        # print("python "+datasetPath+"voc_label.py "+ImagesPath+" "+datasetName)
-        subprocess.Popen(["python",datasetPath+"voc_label.py",ImagesPath, datasetName]+classes)        
+        #                    產生 label 資料夾      
+        function.voc_label(ImagesPath, datasetName, classes)
         #  寫 .data 檔
         cfg_set = datasetPath+datasetName+"/voc_"+datasetName+".data"
-        with open(cfg_set, 'w+') as f:
+        with open(cfg_set, 'w') as f:
             f.write("classes= "+str(len(classes))+'\n')
-            f.write("train  = "+os.getcwd()+"/"+datasetPath+ datasetName + '/' + secName+'_train.txt\n')
-            f.write("valid  = "+os.getcwd()+"/"+datasetPath+ datasetName + '/' + secName+'_val.txt\n')
+            f.write("train  = "+newPath+"/"+secName+'/full_train.txt\n')
+            f.write("valid  = "+newPath+"/"+secName+'/full_val.txt\n')
             f.write("names = data/voc_"+datasetName+".names\n")
 
         datasetList=[]
-        datasetList = find_dataset()
+        datasetList = function.find_dataset(datasetPath)
         return render_template('train.html', dirList=datasetList)
     return render_template("dataset.html")
 
 @app.route('/train')
 def train():
     datasetList=[]
-    datasetList = find_dataset()
+    print(config.LIST_PID)
+    datasetList = function.find_dataset(datasetPath)
     if 'backup' in datasetList:
         datasetList.remove('backup')
     if len(datasetList)==0:
         return render_template('train.html',error="No found any dataset")
-    subprocess.Popen(['rm', 'static/train_log_loss.txt'])
-    subprocess.Popen(['rm', 'static/test.txt'])
-    return render_template('train.html', dirList=datasetList)
-
-def write_log(datasetName, current, paras):
-    add_class('data/voc_'+datasetName+'.names')       
-    classes_size=str(len(classes))
-    os.mkdir("scripts/"+datasetName+"___"+current)
-    file_remove("static/test.txt")
-    # 寫 yolov3_voc.cfg 檔案
-    subprocess.Popen(["python", "read_reversed.py",classes_size]+paras)
-    #  寫 .data 檔
-    cfg_set = "scripts/"+datasetName+"___"+current+"/voc_"+datasetName+".data"
-    copyfile(datasetPath+datasetName+"/voc_"+datasetName+".data", cfg_set)
-    config.CFG_DATA=cfg_set
-    backupDir = backupPath+"/"+datasetName+"___"+current
-    with open(cfg_set, 'a+') as f:
-        f.write("backup = "+backupDir)
-    create_dir(backupPath+"/"+datasetName+"___"+current)
-    logPath='scripts/'+datasetName+"___"+current+'/log'
-    create_dir(logPath)
-    logfile = open(logPath+'/logfile.log', 'w+')
-    cfg_set = os.getcwd()+'/scripts/'+datasetName+"___"+current+'/voc_'+datasetName+".data"
-    cfg_yolo = os.getcwd()+"/scripts/"+datasetName+"___"+current+"/yolov3_"+datasetName+".cfg"
-    # print("cfg_yolo = "+str(cfg_yolo))
-    # print("cfg_set = "+str(cfg_set))
-    time.sleep(1)
-    print("./darknet detector train "+cfg_set+" "+cfg_yolo+ " darknet53.conv.74")
-    p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , "darknet53.conv.74"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    config.PID = p.pid
-    config.LIST_PID.append(p.pid)
-
-    for line in p.stdout:
-        sys.stdout.write(line)
-        logfile.write(line)    
-    print ('write_log finish')
-
-    with open("static/test.txt", "w+") as f:
-        f.write("")
-
-def write_file(log_path, result_dir):
-    avg_loss=[]
-    iou = []
-    with open(result_dir + '/IOU.json', 'w+') as outfile2:
-        with open(result_dir + '/AvgLoss.json', 'w+') as outfile:
-            with open(log_path, 'r') as f:
-                    next_skip = False
-                    for line in f:
-                        if next_skip:
-                            next_skip = False
-                            continue
-                        # 去除多gpu的同步log
-                        if 'Syncing' in line:
-                            continue
-                        # 去除除零错误的log
-                        if 'nan' in line:
-                            continue
-                        if 'Saving weights to' in line:
-                            next_skip = True
-                            continue
-                        if "images" in line:                           
-                            avg_loss.append(float(line.split(' ')[2]))
-                        elif "IOU" in line:
-                            iou.append(float(line.split(' ')[4].split(',')[0]))
-            data = {"avg_loss":avg_loss}
-            json.dump(data, outfile)
-            data = {"IOU":iou}
-            json.dump(data, outfile2)
-
-def extract_log(datasetName, current):
-    time.sleep(10)
-    log_path = 'scripts/'+datasetName+"___"+current+'/log/logfile.log'
-   
-    result_dir = 'static/task/'+datasetName+"___"+current
-    create_dir('static/task/')
-    create_dir(result_dir)
-    log_size = 1               #紀錄 log 檔案有沒有變化
-   
-    while not (os.path.isfile("static/test.txt")):
-        print("config.pid=" + str(config.PID))       
-        if (log_size != os.path.getsize(log_path) and os.path.getsize(log_path) != 0):
-            print("log_size="+str(log_size))
-            log_size = os.path.getsize(log_path)
-            write_file(log_path, result_dir)
-        time.sleep(5)
-    write_file(log_path, result_dir)
-    print("extract_log finish !!!!!")
+    if os.path.isfile('static/train_log_loss.txt'):
+        os.remove('static/train_log_loss.txt')
+    if os.path.isfile('static/test.txt'):
+        os.remove('static/test.txt')
+    return render_template('train.html', dirList=datasetList, pid_size=len(config.LIST_PID))
 
 @app.route('/index')
 def index():
     print("~~~~~~~~~~")
     return render_template('index.html')
 
-pid = 12
+
 @app.route('/training', methods=['GET', 'POST'])
 def training():
     paras = []    
-    file_remove("static/test.txt")
+    function.file_remove("static/test.txt")
     if not os.path.isfile('darknet53.conv.74'):
         subprocess.Popen(['wget','https://pjreddie.com/media/files/darknet53.conv.74'])
         
@@ -338,7 +155,6 @@ def training():
         datasetName = request.form.get('comp1_select')
         config.DATASET_NAME=datasetName          # Mura_LCD4
         print("datasetName="+str(datasetName))
-        config.LIST_PID.append(pid)
         paras.append(datasetName)
         paras.append(request.form.get('max_batches'))
         paras.append(request.form.get('learning_rate'))
@@ -346,9 +162,9 @@ def training():
         paras.append(request.form.get('subdivisions'))
         paras.append(current)
 
-        Thread1=threading.Thread(target=write_log, args=(datasetName, current, paras))
+        Thread1=threading.Thread(target=function.write_log, args=(datasetName, current, paras, classes, config, datasetPath, backupPath))
         Thread1.start()       
-        Thread2=threading.Thread(target=extract_log, args=(datasetName, current))
+        Thread2=threading.Thread(target=function.extract_log, args=(datasetName, current, config))
         Thread2.start()
         time.sleep(1)
         filepath = datasetName+"___"+current
@@ -358,7 +174,7 @@ def training():
 @app.route("/option", methods=['GET', 'POST'])
 def option():
     datasetList=[]
-    datasetList = find_dataset()
+    datasetList = function.find_dataset(datasetPath)
     if 'backup' in datasetList:
                     datasetList.remove('backup')
     if request.method == 'POST':        
@@ -367,8 +183,11 @@ def option():
         if request.form["btn"] == "Train again":
             return render_template("train.html", pid=config.PID, dirList=datasetList)
         if request.form["btn"] == "Close":
-            if (check_pid(config.PID)):
-                close_pid(config.PID)
+            if (function.check_pid(config.PID)):
+                function.close_pid(config.PID)
+                print("======== Del pid"+ str(config.PID)+" ========")
+                config.LIST_PID.remove(config.PID)
+                print("LIST_PID = "+str(config.LIST_PID))
             
     return render_template("train.html", pid=config.PID, dirList=datasetList)
 
@@ -379,8 +198,8 @@ def loss_gp():
     
 @app.route("/testing", methods=['GET', 'POST'])
 def testing():
-    file_remove('predictions.jpg')
-    create_dir(resultDir)
+    function.file_remove('predictions.jpg')
+    function.create_dir(resultDir)
     print(config.TEST_DATASET)
     dataset = config.TEST_DATASET
     name = config.TEST_DATASET.split("___")
@@ -449,8 +268,7 @@ def test():
     config.TIME=name[-1]
     childtree = []
     dirfiles = listdir(backupPath+"/"+str(config.DATASET_NAME)+"___"+str(config.TIME))
-    
-    
+        
     for f in dirfiles:
         childtree.append(f)
     if request.method == "POST":
@@ -489,8 +307,12 @@ def test():
 
 if __name__ == "__main__":
     app.secret_key = os.urandom(12)
+    function.create_dir(backupPath)
+    function.create_dir(datasetPath)
+    function.create_dir("static")
+    function.create_dir(resultDir)
     if not os.path.isfile("darknet"):
         subprocess.Popen(["make","-j16"])
-    file_remove("test.txt")
-    read_record()
+    function.file_remove("test.txt")
+    function.read_record(recordPath, config)
     app.run(debug=True,host='0.0.0.0', port=6060, threaded=True)

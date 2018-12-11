@@ -26,8 +26,7 @@ def convert(size, box):
     h = h*dh
     return (x,y,w,h)
 
-def convert_annotation(ID, image_id):
-    
+def convert_annotation(ID, image_id):    
     in_file = open(os.path.dirname(source_folder)+'/Annotations/%s.xml'%(image_id))
     out_file = open(os.path.dirname(source_folder)+'/labels/%s.txt'%(image_id), 'w')
     # in_file = open('Mura/LCD%s/Annotations/%s.xml'%(ID, image_id))
@@ -49,15 +48,13 @@ def convert_annotation(ID, image_id):
         bb = convert((w,h), b)
         out_file.write(str(cls_id) + " " + " ".join([str(a) for a in bb]) + '\n')
 
-wd = getcwd()
-
 for ID, image_set in sets:
     if not os.path.exists(os.path.dirname(source_folder)+'/labels/'):
         os.makedirs(os.path.dirname(source_folder)+'/labels/')
     image_ids = open(os.path.dirname(source_folder)+'/ImageSets/Main/%s.txt'%(image_set)).read().strip().split()
     list_file = open(os.getcwd()+'/dataset/%s/%s_%s.txt'%(sys.argv[2], ID, image_set), 'w')
     for image_id in image_ids:
-        list_file.write(os.path.dirname(source_folder)+'/JPEGImages/%s.png\n'%(image_id))
+        list_file.write(os.path.dirname(source_folder)+'/JPEGImages/%s.jpg\n'%(image_id))
         convert_annotation(ID, image_id)
     list_file.close()
 print("voc_finish!!!!!")
