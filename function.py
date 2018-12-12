@@ -183,7 +183,6 @@ def write_log(datasetName, current, paras, classes, config, datasetPath, backupP
     file_remove("static/test.txt")
     # 寫 yolov3_voc.cfg 檔案
     read_reversed(classes_size, paras)
-    # subprocess.Popen(["python", "read_reversed.py",classes_size]+paras)
     #  寫 .data 檔
     cfg_set = "scripts/"+datasetName+"___"+current+"/voc_"+datasetName+".data"
     copyfile(datasetPath+datasetName+"/voc_"+datasetName+".data", cfg_set)
@@ -197,8 +196,6 @@ def write_log(datasetName, current, paras, classes, config, datasetPath, backupP
     logfile = open(logPath+'/logfile.log', 'w+')
     cfg_set = os.getcwd()+'/scripts/'+datasetName+"___"+current+'/voc_'+datasetName+".data"
     cfg_yolo = os.getcwd()+"/scripts/"+datasetName+"___"+current+"/yolov3_"+datasetName+".cfg"
-    # print("cfg_yolo = "+str(cfg_yolo))
-    # print("cfg_set = "+str(cfg_set))
     time.sleep(1)
     print("./darknet detector train "+cfg_set+" "+cfg_yolo+ " darknet53.conv.74")
     p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , "darknet53.conv.74"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -273,13 +270,10 @@ def read_reversed(classes, paras):
     learning_rate = paras[2]
     batch = paras[3]
     subdivisions = paras[4]
-    current = paras[5]
-    print(paras)
-    cfg_yolo = 'scripts/'+datasetName+"___"+current+'/yolov3_'+datasetName+'.cfg'
-    print("!!!!!!!!!!!!" + str(classes))
+    current = paras[5]   
+    cfg_yolo = 'scripts/'+datasetName+"___"+current+'/yolov3_'+datasetName+'.cfg'   
     replace_count=[]
     count=0
-    is_train=0
     temp = 'scripts/'+datasetName+"___"+current+'/cfg_temp.cfg'
     copyfile('cfg/yolov3-voc.cfg', cfg_yolo)
     with open(cfg_yolo, 'r') as fr:    
