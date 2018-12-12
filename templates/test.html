@@ -12,58 +12,103 @@
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
             <br>
             <div class="container">
+                <div style="flex-grow: 1">
                 <h2>YOLO v3</h2>
                 {% if error %}
                 <div class="alert alert-danger">
                 <strong>Error:</strong> {{ error }}        
                 </div>
                 {% endif %}
-                <form action="{{ url_for('test') }}" method="post">  
-                    <div class="form-group">
-                        <label for="FormControlSelect0">Choose dataset: </label>
-                        <select size="{{size_d}}" name="form_1" value="comp0_select" onclick="this.form.submit()" class="form-control" id="FormControlSelect0">
-                            {%- for item in tree recursive %}
-                                {% if item == dataset  %}
-                                    <option selected="selected">{{ dataset }}</option>
-                                {% else %}
-                                    <option>{{ item }}</option>
-                                {%- endif %}
-                            {%- endfor %}
-                        </select>                    
-                    </div>
-                    <button type="submit" class="btn btn-primary" name="form_1" value="del_btn">Delete All</button>
-                    <br>
-                    <br>
-                </form>
+                
+                    <form action="{{ url_for('test') }}" method="post">  
+                        <div class="form-group">
+                            <label for="FormControlSelect0">Choose dataset: </label>
+                            <select size="{{size_d}}" name="form_1" value="comp0_select" onclick="this.form.submit()" class="form-control" id="FormControlSelect0">
+                                {%- for item in tree recursive %}
+                                    {% if item == dataset  %}
+                                        <option selected="selected">{{ dataset }}</option>
+                                    {% else %}
+                                        <option>{{ item }}</option>
+                                    {%- endif %}
+                                {%- endfor %}
+                            </select>                    
+                        </div>
+                        <button type="submit" class="btn btn-primary" name="form_1" value="del_btn">Delete All</button>
+                        <br>
+                        <br>
+                    </form>
                 
                 
-                <form action="{{ url_for('testing') }}" method="post">
-                    <div class="form-group">
-                        <label for="FormControlSelect1">Choose weights: </label>
-                        <select size="5" name="comp1_select" class="form-control" id="FormControlSelect1">
-                                {%- for item in childtree recursive %}
-                                        <option>{{ item }} </option>
-                                {%- endfor %}
-                        </select>
-                    <br>
-                    
-                        <label for="FormControlSelect2">Choose Single Image: </label>
-                        <select multiple  name="comp2_select" class="form-control" id="FormControlSelect2">
-                                <!-- <option selected="selected">2008_008556.jpg</option> -->
-                                {%- for item in img recursive %}
-                                        <option>{{ item }} </option>
-                                {%- endfor %}
-                        </select>
-                    </div>
-                    <button type="submit" class="btn btn-primary" name="btn" id="test_start_btn" >Start</button>
-                </form>
+                     <form action="{{ url_for('test') }}" method="post">
+                        <div class="form-group">
+                            <label for="FormControlSelect1">Choose weights: </label>
+                            <select size="5" name="comp1_select" class="form-control" id="FormControlSelect1">
+                                    {%- for item in childtree recursive %}
+                                            <option>{{ item }} </option>
+                                    {%- endfor %}
+                            </select>
+                        <br>
+                        
+                            <label for="FormControlSelect2">Choose Single Image: </label>
+                            <select multiple  name="comp2_select" class="form-control" id="FormControlSelect2">
+                                    <!-- <option selected="selected">2008_008556.jpg</option> -->
+                                    {%- for item in imglist recursive %}
+                                            <option>{{ item }} </option>
+                                    {%- endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary" name="form_1" value="test_start" id="test_start_btn" >Start</button>
+                    </form>
             </div>
         
+            <div style="flex-grow: 2">
+                <div class="box">
+                    <img src="" id="image">
+                </div>
+            </div>
             <style>
                 a.list-group-item{
                     font-size: 24px;
                 }
+                .container {
+                    display: flex;
+                }
+                label{
+                    display: inline;
+                }
+                .box {
+                    width:80%;
+                    min-height:80vh;
+                    margin:auto;
+                    border:1px solid;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center; /* not really needed with auto margin on img*/
+                }
+                .box img {
+                    display: block;
+                    width: 80%;
+                    min-width:100px;
+                    max-width: 350px; /*actual image width*/
+                    height: auto; /* maintain aspect ratio*/
+                    margin: auto; /*optional centering of image*/
+                }
             </style>
+
+            <script>
+                $(document).ready(function() {
+                    $.ajaxSetup({ cache: false });
+                    $("test_start_btn").click(function(){
+                        $(this).toggleClass('btn btn-primary');
+                        $(this).toggleClass('btn btn-success');
+                    });
+                });
+                var i = 0;               
+                if ( "{{result}}" != ""){                        
+                    document.getElementById("image").src ="static/Result/{{result}}";
+                }
+            </script>
+            </div>
         </main>
     </body>
 </html>

@@ -14,6 +14,7 @@ for (dirpath, dirnames, filenames) in walk(label_path):
         img_format = img_F[0].split('.')[-1]
         f = f+"."+img_format
         if f in img_F:
-            print(file)
+            pass
         else:
             print("!!!!!!"+file)
+            os.remove(file)

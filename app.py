@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, render_template, flash, request, redirect, session, abort, url_for, g, jsonify
 from wtforms import Form, TextField, TextAreaField, validators, StringField
+from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
 import os
 from os import listdir
@@ -18,6 +19,7 @@ from shutil import copyfile
 # App config.
 DEBUG = True
 app = Flask(__name__)
+db = SQLAlchemy(app)
 app.config.from_object(config)
 classes = []   #類別資訊
 classNamePath = config.CLASSPATH  #類別名稱
@@ -191,31 +193,6 @@ def option():
             
     return render_template("train.html", pid=config.PID, dirList=datasetList)
 
-@app.route("/loss_gp", methods=['GET', 'POST'])
-def loss_gp():
-    return render_template("loss_gp.html")
-
-    
-@app.route("/testing", methods=['GET', 'POST'])
-def testing():
-    function.file_remove('predictions.jpg')
-    function.create_dir(resultDir)
-    print(config.TEST_DATASET)
-    dataset = config.TEST_DATASET
-    name = config.TEST_DATASET.split("___")
-    print("dataset = "+dataset)
-    wei_file = request.form.get('comp1_select')
-    img = request.form.get('comp2_select')
-    print("./darknet detector test scripts/"+dataset+"/voc_"+name[0]+".data scripts/"+dataset+"/yolov3_"+name[0]+".cfg scripts/backup/"+dataset+"/"+str(wei_file)+ ' data/'+str(img))
-    p = subprocess.Popen(["./darknet", "detector","test","scripts/"+dataset+"/voc_"+name[0]+".data", "scripts/"+dataset+"/yolov3_"+name[0]+".cfg","scripts/backup/"+dataset+"/"+str(wei_file), 'data/'+str(img)])
-    time.sleep(3)
-    while True:
-        if os.path.isfile(os.getcwd()+'/predictions.jpg'):           
-            break
-    img_name = str(wei_file)+'-'+dataset+'.jpg'
-    shutil.move('predictions.jpg', resultDir+"/"+img_name)
-    time.sleep(3)
-    return render_template("testing.html", img=img_name)
 
 @app.route("/view_training", methods=['GET', 'POST'])
 def view_training():
@@ -229,6 +206,18 @@ def view_training():
         return render_template('view_training.html',error=error)
     config.TEST_DATASET = backupDir[0]
     if request.method == "POST":
+        if 'delBtn' in request.form:            
+            del_dir = request.form.getlist('comp0_select')
+            for dirname in del_dir:     # 存放 weight
+                print(dirname)
+                shutil.rmtree(backupPath+'/'+dirname, ignore_errors=True)
+                # 存放 log .data .cfg
+                if not dirname=='backup':
+                    shutil.rmtree('scripts/'+dirname, ignore_errors=True)
+                # 存放 log .data .cfg            
+                shutil.rmtree('static/task/'+dirname, ignore_errors=True)
+                backupDir.remove(dirname)
+        else:
             config.TEST_DATASET = request.form.get('comp0_select')
             print(request.form.get('comp0_select'))
 
@@ -244,7 +233,7 @@ def showimg():
 def test():  
     imgPath = "data"
     backupDir = []
-    img=[]
+    imglist=[]
     error=None
     size_d = 0
     backupfiles = listdir(backupPath)
@@ -253,7 +242,7 @@ def test():
     imgfiles = listdir(imgPath)
     for f in imgfiles:
         if os.path.splitext(f)[-1] in [".png", ".jpg"]:
-            img.append(f)
+            imglist.append(f)
     if len(backupDir) > 5:
         size_d = 5
     elif len(backupDir)==0:
@@ -262,19 +251,19 @@ def test():
     else:
         size_d=len(backupDir)
     name = backupDir[0].split("___")
-    
     # config.DATASET_NAME=backupDir[0]
     config.DATASET_NAME=name[0]
     config.TIME=name[-1]
     childtree = []
     dirfiles = listdir(backupPath+"/"+str(config.DATASET_NAME)+"___"+str(config.TIME))
-        
+    
     for f in dirfiles:
-        childtree.append(f)
+        if 'weight' in f:
+            childtree.append(f)
     if request.method == "POST":
         if request.form["form_1"] == 'del_btn':
+            print("!!!!   del   !!!!!")
             print(request.form["form_1"])
-            print('del')
             backupfiles = os.listdir(backupPath)
             for dirname in backupfiles:     # 存放 weight
                 print(dirname)
@@ -289,20 +278,42 @@ def test():
             
             error = "Cannot find any backup"
             return render_template('test.html',error=error)
-            
-        elif request.form["form_1"]:
-            print(request.form["form_1"])
-            print('change')
-            dataset = request.form.get('form_1')
+        
+        elif request.form['form_1'] == 'test_start':
+            print("TEST !!!!!!!!!!!!!!")
+            function.file_remove('predictions.jpg')
+            function.create_dir(resultDir)
+            if config.TEST_DATASET=="":
+                config.TEST_DATASET = backupDir[0]
+            print(config.TEST_DATASET)
+            dataset = config.TEST_DATASET
+            name = config.TEST_DATASET.split("___")
+            print("dataset = "+dataset)
+            wei_file = request.form.get('comp1_select')
+            img = request.form.get('comp2_select')
+            print("./darknet detector test scripts/"+dataset+"/voc_"+name[0]+".data scripts/"+dataset+"/yolov3_"+name[0]+".cfg scripts/backup/"+dataset+"/"+str(wei_file)+ ' data/'+str(img))
+            p = subprocess.Popen(["./darknet", "detector","test","scripts/"+dataset+"/voc_"+name[0]+".data", "scripts/"+dataset+"/yolov3_"+name[0]+".cfg","scripts/backup/"+dataset+"/"+str(wei_file), 'data/'+str(img)])
+            p.wait()
+            print("YA~~~~~~~~")          
+            img_name = str(wei_file)+'-'+dataset+'.jpg'
+            shutil.move('predictions.jpg', resultDir+"/"+img_name)            
+            return render_template("test.html",size_d=size_d, dataset=config.TEST_DATASET,tree=backupDir, childtree=childtree, imglist=imglist, error=error, result=img_name)
+
+        else:
+            print("!!!!   change   !!!!!")
+            print(request.form["form_1"])          
+            dataset = request.form.get('form_1') 
             print('dataset = '+str(dataset))
             del childtree
             childtree=[]
             dirfiles = listdir(backupPath+"/"+str(dataset))
             for f in dirfiles:
-                childtree.append(f)
+                if 'weight' in f:
+                    childtree.append(f)
+                
             config.TEST_DATASET=dataset
-        
-    return render_template('test.html',size_d=size_d, dataset=config.TEST_DATASET,tree=backupDir, childtree=childtree, img=img, error=error)
+
+    return render_template('test.html',size_d=size_d, dataset=config.TEST_DATASET,tree=backupDir, childtree=childtree, imglist=imglist, error=error, result="")
 
 
 if __name__ == "__main__":

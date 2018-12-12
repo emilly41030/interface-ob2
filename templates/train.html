@@ -1,7 +1,5 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
-
-<html>
+<!DOCTYPE html>
     <head>
        <title>Deep Learning</title>
        <link rel="stylesheet" href="static/bootstrap.min.css">
@@ -9,21 +7,15 @@
        <meta name="viewport" content = "width=device-width, initial-scale=1.0"> 
     </head>
     <style>
-        button:disabled,
-        button[disabled]{
-            border: 1px solid #999999;
-            background-color: #cccccc;
-            color: #666666;
-        }
-        form.form-control{
-            font-size:5px;
-        }
+        input[type=number]{
+            height: auto;
+        } 
+        option{
+            height: auto;
+        } 
     </style>
     <body> 
-        {% include '_navbar.html' %}
-        <script>
-            document.getElementById("myspan").innerHTML="newtext";
-        </script>
+        {% include '_navbar.html' %}        
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
             <br>
             <div class="container">
@@ -36,20 +28,11 @@
             <form action="{{ url_for('training') }}" method="post">
                 <div class="form-group">
                     <label for="FormControlSelect1">Choose dataset: </label>
-                    <select name="comp1_select" class="form-control" id="FormControlSelect1">
+                    <select size=2 name="comp1_select" class="form-control" id="FormControlSelect1">
                         {%- for item in dirList recursive %}
                             <option>{{ item }} </option>
                         {%- endfor %}
                     </select>
-                </div>
-                <div class="form-group">
-                        <label for="FormControlSelect2">Choose Single Image: </label>
-                        <select name="comp2_select" class="form-control" id="FormControlSelect2">
-                                <option selected="selected">2008_008556.jpg</option>
-                                {%- for item in imagename recursive %}
-                                        <option>{{ item }} </option>
-                                {%- endfor %}
-                        </select>
                 </div>
                 <div class="form-group">
                     <label for="max_batches">Max batches:</label>
@@ -67,23 +50,20 @@
                     <label for="learning_rate">Learning rate:</label>
                     <input type="number" step="0.0001" class="form-control" id="learning_rate" name="learning_rate" value="0.001" min=0>
                     <br>
+                    
+                     <div class="form-group">
+                        <label for="FormControlSelect2">Choose pre-train model: </label>
+                        <select size=2 name="comp2_select" class="form-control" id="FormControlSelect2">
+                                {%- for item in imagename recursive %}
+                                        <option>{{ item }} </option>
+                                {%- endfor %}
+                        </select>
                     </div>
                     <button type="submit" class="btn btn-success" id="btn1" name="btn_train" value="start">Start</button>
                 </form>
                 <br>        
                 </div>
-
-                <script>
-                    // alert({{pid_size}})
-                    // if ({{ pid_size }} > 0){
-                    //     alert("!!!!!!!!!!!")
-                    //     var node = document.createElement("LI");
-                    //     var textnode = document.createTextNode("Water");
-                    //     node.appendChild(textnode);
-                    //     document.getElementById("myList").appendChild(node);
-                    // }
-                </script>
-                    
+                   
         </main>
     </body>
 </html>

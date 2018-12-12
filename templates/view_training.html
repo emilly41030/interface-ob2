@@ -14,21 +14,16 @@
         }
         .flex-container {
               display: flex;
-             
-              
             }
 
         .flex-container > div {          
-          color: black;
-          
+          color: black;          
         }
-        select{
-            size="100"
+        a.list-group-item{
+            font-size: 24px;
         }
-        .col-2 {
-             -ms-flex:0 0 16.666667%;
-             flex:0 0 16.666667%;
-             max-width:10.666667%
+        input {
+            float:left;
         }
     </style>
     <body>
@@ -36,17 +31,18 @@
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
             <div class="flex-container">
                 
+                
+                <div style="flex-grow: 1">
+                <br>
                 {% if error %}
                 <div class="alert alert-danger">
                 <strong>Error:</strong> {{ error }}
                 </div>
                 {% endif %}
-                <div style="flex-grow: 5">
-                    <br>
                 <h2>YOLO v3</h2>
-                    <form action="{{ url_for('view_training') }}" method="post">  
+                    <form action="{{ url_for('view_training') }}" method="post">
                         <!-- <label for="FormControlSelect0">Choose Pretrain Model: </label> -->
-                            <select multiple size="30" name="comp0_select" id="comp0_select" value="comp0_select" onchange="this.form.submit()" class="form-control"  id="FormControlSelect0">
+                            <select size="30" width=20px name="comp0_select" id="comp0_select" value="comp0_select" onchange="this.form.submit()" class="form-control"  id="FormControlSelect0">
                             {%- for item in tree recursive %}
                                 {% if item == dataset  %}
                                     <option selected="selected">{{ dataset }}</option>
@@ -54,14 +50,20 @@
                                     <option>{{ item }}</option>
                                 {%- endif %}
                             {%- endfor %}
-                        </select>                        
+                        </select>
+                        <br>
+                        <input style="display:none" type="submit" class="btn btn-danger" id="delBtn" value="Delete" name="delBtn">
+                        <input style="display:none" type="submit" class="btn btn-success" id="cancelBtn" value="Cancel" name="cancelBtn">
                     </form>
-                    <br>
-                   <!-- <input type="button" class="btn btn-primary" id="edit" value="Edit" name="btn" onclick="del_btn()">-->
+                    <br>                  
+                    <input type="button" class="btn btn-primary" id="edit" value="Edit" name="btn" onclick="create_delBtn()">
+                    <form action="{{ url_for('view_training') }}" method="post">
+                        
+                    </form>
                 </div>
                
                 <!-- <button type="submit" class="btn btn-primary" id="edit_btn" name="edit_btn" value="edit_btn">Edit</button> -->
-                <div style="flex-grow: 5">
+                <div style="flex-grow:2">
                     <br>
                     <br>
                     <br>
@@ -97,24 +99,27 @@
                 }
             });
         })
-        $('#myonoffswitch').click(function(){
-        $('.tab').hide();
-        if($('#myonoffswitch').attr('checked') == "checked")
-        {
-           $('#yes').show();  
+        function create_delBtn(){
+            document.getElementById("delBtn").style.display = "block";
+            document.getElementById("cancelBtn").style.display = "block";
+            document.getElementById("edit").style.display = "none";
+            var select_0 = document.getElementById("comp0_select");
+            select_0.onchange = NaN;
+            select_0.multiple = true;
         }
-        else
-        {
-            $('#no').show();
-        }
-        //alert($('#myonoffswitch').attr('checked'));
-        });
-       
+        // $("input").click(function(){
+        //     $(this).toggleClass('btn btn-primary btn btn-danger');    
+        // });
+      
+        // function change_btn() {            
+        //     var btn = document.getElementById("edit");
+        //     var select_0 = document.getElementById("comp0_select");
+        //     if (btn.value === "Edit") {
+        //         btn.value = "Delete";
+        //         select_0.onchange = NaN;
+        //     } else {
+        //         btn.value = "Edit";
+        //     }
+        // } 
     </script>
-
-    <style>
-        a.list-group-item{
-            font-size: 24px;
-        }
-    </style>
 </html>

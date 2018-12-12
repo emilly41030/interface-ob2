@@ -22,7 +22,6 @@ if not os.path.isdir(out_path2):
 def scale_and_draw():
     for (dirpath, dirnames, filenames) in walk(img_path):
         for file in range(len(filenames)):
-            positive_count = 0
             arix_list = []
 
             f_name = filenames[file][:-4]
@@ -72,7 +71,6 @@ def scale_and_draw():
 def draw():
     for (dirpath, dirnames, filenames) in walk(img_path):
             for file in range(len(filenames)):
-                positive_count = 0
                 arix_list = []
 
                 f_name = filenames[file][:-4]
@@ -95,7 +93,6 @@ def draw():
                 dw = 1./(width)
                 dh = 1./(height)
 
-                count = 0
                 for i in range(len(arix_list)):#每個瑕疵
                     x = float(arix_list[i][1])/dw
                     w = float(arix_list[i][3])/dw
