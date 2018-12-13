@@ -233,8 +233,12 @@ textarea {
   margin: 0;
   font-family: inherit;
   font-size: inherit;
-  line-height: inherit; }
-
+  line-height: inherit;
+  font-size: 14px;
+ }
+option{
+  height:auto;
+}
 button,
 input {
   overflow: visible; }
@@ -3603,7 +3607,9 @@ input[type="button"].btn-block {
       color: rgba(0, 0, 0, 0.9); }
 
 .navbar-dark .navbar-brand {
-  color: #fff; }
+  color: #fff;
+  font-size:18px;
+ }
   .navbar-dark .navbar-brand:hover, .navbar-dark .navbar-brand:focus {
     color: #fff; }
 
@@ -7326,7 +7332,7 @@ a.text-dark:hover, a.text-dark:focus {
     margin-bottom: 0px; }
   .form-group label {
     font-size: 1rem;
-    font-weight: 400; }
+    font-weight: 600; }
   .form-group .invalid-feedback,
   .form-group .valid-feedback {
     font-weight: 400; }

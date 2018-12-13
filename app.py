@@ -15,11 +15,14 @@ import sys
 import shutil
 import function
 from shutil import copyfile
+from flask_sqlalchemy import SQLAlchemy
 
 # App config.
 DEBUG = True
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
 db = SQLAlchemy(app)
+
 app.config.from_object(config)
 classes = []   #類別資訊
 classNamePath = config.CLASSPATH  #類別名稱
@@ -125,18 +128,17 @@ def ImportDataset():
 
 @app.route('/train')
 def train():
-    datasetList=[]
-    print(config.LIST_PID)
+    backupFileList = []
+    backupFileList.append('darknet53.conv.74')
+    backupFileList = function.make_tree(backupPath, backupFileList)
     datasetList = function.find_dataset(datasetPath)
-    if 'backup' in datasetList:
-        datasetList.remove('backup')
     if len(datasetList)==0:
         return render_template('train.html',error="No found any dataset")
     if os.path.isfile('static/train_log_loss.txt'):
         os.remove('static/train_log_loss.txt')
     if os.path.isfile('static/test.txt'):
         os.remove('static/test.txt')
-    return render_template('train.html', dirList=datasetList, pid_size=len(config.LIST_PID))
+    return render_template('train.html', dirList=datasetList, pid_size=len(config.LIST_PID), backup=backupFileList)
 
 @app.route('/index')
 def index():
@@ -156,14 +158,13 @@ def training():
         config.EPOCH = request.form.get('max_batches')
         datasetName = request.form.get('comp1_select')
         config.DATASET_NAME=datasetName          # Mura_LCD4
-        print("datasetName="+str(datasetName))
         paras.append(datasetName)
         paras.append(request.form.get('max_batches'))
         paras.append(request.form.get('learning_rate'))
         paras.append(request.form.get('batch'))
         paras.append(request.form.get('subdivisions'))
         paras.append(current)
-
+        paras.append(request.form.get('comp2_select'))
         Thread1=threading.Thread(target=function.write_log, args=(datasetName, current, paras, classes, config, datasetPath, backupPath))
         Thread1.start()       
         Thread2=threading.Thread(target=function.extract_log, args=(datasetName, current, config))
@@ -175,24 +176,31 @@ def training():
     
 @app.route("/option", methods=['GET', 'POST'])
 def option():
-    datasetList=[]
+    backupFileList = []
+    backupFileList.append('darknet53.conv.74')
+    backupFileList = function.make_tree(backupPath, backupFileList)
     datasetList = function.find_dataset(datasetPath)
-    if 'backup' in datasetList:
-                    datasetList.remove('backup')
-    if request.method == 'POST':        
+    if len(datasetList)==0:
+        return render_template('train.html',error="No found any dataset")
+
+    if request.method == 'POST':
+        backupFileList = []
+        backupFileList = function.make_tree(backupPath, backupFileList)
+        datasetList = function.find_dataset(datasetPath)
+        backupFileList.append('darknet53.conv.74')
+        if len(datasetList)==0:
+            return render_template('train.html',error="No found any dataset")     
         if request.form["btn"] == "Test":
             return render_template('test.html')
-        if request.form["btn"] == "Train again":
-            return render_template("train.html", pid=config.PID, dirList=datasetList)
         if request.form["btn"] == "Close":
             if (function.check_pid(config.PID)):
                 function.close_pid(config.PID)
                 print("======== Del pid"+ str(config.PID)+" ========")
                 config.LIST_PID.remove(config.PID)
                 print("LIST_PID = "+str(config.LIST_PID))
-            
-    return render_template("train.html", pid=config.PID, dirList=datasetList)
-
+                        
+    return render_template("train.html", pid=config.PID, dirList=datasetList,  backup=backupFileList)
+    
 
 @app.route("/view_training", methods=['GET', 'POST'])
 def view_training():
@@ -261,7 +269,7 @@ def test():
         if 'weight' in f:
             childtree.append(f)
     if request.method == "POST":
-        if request.form["form_1"] == 'del_btn':
+        if 'del_btn' in request.form:
             print("!!!!   del   !!!!!")
             print(request.form["form_1"])
             backupfiles = os.listdir(backupPath)
@@ -294,7 +302,6 @@ def test():
             print("./darknet detector test scripts/"+dataset+"/voc_"+name[0]+".data scripts/"+dataset+"/yolov3_"+name[0]+".cfg scripts/backup/"+dataset+"/"+str(wei_file)+ ' data/'+str(img))
             p = subprocess.Popen(["./darknet", "detector","test","scripts/"+dataset+"/voc_"+name[0]+".data", "scripts/"+dataset+"/yolov3_"+name[0]+".cfg","scripts/backup/"+dataset+"/"+str(wei_file), 'data/'+str(img)])
             p.wait()
-            print("YA~~~~~~~~")          
             img_name = str(wei_file)+'-'+dataset+'.jpg'
             shutil.move('predictions.jpg', resultDir+"/"+img_name)            
             return render_template("test.html",size_d=size_d, dataset=config.TEST_DATASET,tree=backupDir, childtree=childtree, imglist=imglist, error=error, result=img_name)

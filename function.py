@@ -75,6 +75,18 @@ def check_dir_notzero(path):
     else:
         return False
 
+def find_backupFileList(backupPath):
+    backupFileList=[]
+    backupFileList.append('darknet53.conv.74')
+    for ( dirpath, dirnames, filenames) in os.walk(backupPath):
+        for path in dirpath:
+            for dirname in dirnames:
+                for file in filenames:
+                    print(path+"/"+dirname+'/'+file)
+                    if '.backup' in file:
+                        backupFileList.append(file)
+    return backupFileList
+
 def read_record(recordPath, config):
     if os.path.isfile(recordPath):
         with open(recordPath, "r") as f:
@@ -95,6 +107,20 @@ def close_pid(pid):
 
 def get_pid(name):
     return subprocess.check_output(["pidof",name])
+
+def make_tree(path, list_f):
+    try: lst = os.listdir(path)
+    except OSError:
+        pass #ignore errors
+    else:
+        for name in lst:
+            fn = os.path.join(path, name)
+            if os.path.isdir(fn):
+                make_tree(fn, list_f)
+            else:                
+                if '.backup' in fn:
+                    list_f.append(fn)
+    return list_f
 
 def check_pid(pid): 
     try:
@@ -132,6 +158,8 @@ def find_dataset(datasetPath):
         fullpath = os.path.join(datasetPath, f)   
         if os.path.isdir(fullpath):
             datasetList.append(f)
+    if 'backup' in datasetList:
+        datasetList.remove('backup')
     return datasetList
 
 def create_listName(source_folder):
@@ -197,8 +225,10 @@ def write_log(datasetName, current, paras, classes, config, datasetPath, backupP
     cfg_set = os.getcwd()+'/scripts/'+datasetName+"___"+current+'/voc_'+datasetName+".data"
     cfg_yolo = os.getcwd()+"/scripts/"+datasetName+"___"+current+"/yolov3_"+datasetName+".cfg"
     time.sleep(1)
-    print("./darknet detector train "+cfg_set+" "+cfg_yolo+ " darknet53.conv.74")
-    p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , "darknet53.conv.74"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    # print("./darknet detector train "+cfg_set+" "+cfg_yolo+ " darknet53.conv.74")
+    # p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , "darknet53.conv.74"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    print("./darknet detector train "+cfg_set+" "+cfg_yolo+ " "+paras[6])
+    p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , paras[6]], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     config.PID = p.pid
     config.LIST_PID.append(p.pid)
     print("======== Add pid  "+ str(config.PID)+" ========")

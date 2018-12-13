@@ -17,7 +17,7 @@
     <body> 
         {% include '_navbar.html' %}        
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
-            <br>
+           
             <div class="container">
             <h2>YOLO v3</h2>
             {% if error %}
@@ -28,7 +28,7 @@
             <form action="{{ url_for('training') }}" method="post">
                 <div class="form-group">
                     <label for="FormControlSelect1">Choose dataset: </label>
-                    <select size=2 name="comp1_select" class="form-control" id="FormControlSelect1">
+                    <select name="comp1_select" class="form-control" id="FormControlSelect1">
                         {%- for item in dirList recursive %}
                             <option>{{ item }} </option>
                         {%- endfor %}
@@ -53,8 +53,8 @@
                     
                      <div class="form-group">
                         <label for="FormControlSelect2">Choose pre-train model: </label>
-                        <select size=2 name="comp2_select" class="form-control" id="FormControlSelect2">
-                                {%- for item in imagename recursive %}
+                        <select name="comp2_select" class="form-control" id="FormControlSelect2">
+                                {%- for item in backup recursive %}
                                         <option>{{ item }} </option>
                                 {%- endfor %}
                         </select>

@@ -39,8 +39,9 @@ body {
 }
 
 .sidebar .nav-link {
-  font-weight: 400;
+  font-weight: 600;
   color: #333;
+  font-size: 14px;
 }
 
 .sidebar .nav-link .feather {
@@ -100,13 +101,14 @@ body {
 
 }
 form label {
-      width: 15%;
+      width: 25%;
+      font-weight: 600;
 }
 form input{
     font-size:14px;
 }
 label {
-    font: normal 14px !important;
+    font: normal 14px;
 }
 
 input[type="text"]
@@ -126,19 +128,4 @@ select * {
 }
 div.form-group{
   font-size:14px;
-}
-
-.form-control {
-    display: block;
-    width: 90%;
-    height: calc(2rem);
-}
-.btn{
-  font-size: 14px;
-}
-
-.col-2 {
- -ms-flex:0 0 16.666667%;
- flex:0 0 16.666667%;
- max-width:10.666667%
 }
