@@ -16,13 +16,43 @@ import shutil
 import function
 from shutil import copyfile
 from flask_sqlalchemy import SQLAlchemy
+from flask_script import Manager
+from flask_migrate import Migrate, MigrateCommand
 
 # App config.
-DEBUG = True
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-db = SQLAlchemy(app)
 
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+manager = Manager(app)
+manager.add_command('db', MigrateCommand)
+
+
+class TaskData(db.Model):
+    __tablename__ = 'TaskData'
+    Id = db.Column(db.Integer, primary_key=True)
+    UserName = db.Column(db.String(64))
+    TaskName = db.Column(db.String(64))
+    Dataset = db.Column(db.Integer)
+    RunTime = db.Column(db.String(64))
+    MaxBatch = db.Column(db.Integer)
+    BatchSize = db.Column(db.Integer)
+    Subdivisions = db.Column(db.Integer)
+    LearningRate = db.Column(db.Integer)
+    PID = db.Column(db.Integer)
+    def __init__(self, UserName, TaskName, Dataset, RunTime, MaxBatch, BatchSize, Subdivisions, LearningRate, PID):      
+        self.UserName = UserName
+        self.TaskName = TaskName
+        self.Dataset = Dataset
+        self.RunTime = RunTime
+        self.MaxBatch = MaxBatch
+        self.BatchSize = BatchSize
+        self.Subdivisions = Subdivisions
+        self.LearningRate = LearningRate
+        self.PID = PID
+    
 app.config.from_object(config)
 classes = []   #類別資訊
 classNamePath = config.CLASSPATH  #類別名稱
@@ -121,9 +151,11 @@ def ImportDataset():
             f.write("valid  = "+newPath+"/"+secName+'/full_val.txt\n')
             f.write("names = data/voc_"+datasetName+".names\n")
 
-        datasetList=[]
+        backupFileList = []
+        backupFileList.append('darknet53.conv.74')
+        backupFileList = function.make_tree(backupPath, backupFileList)
         datasetList = function.find_dataset(datasetPath)
-        return render_template('train.html', dirList=datasetList)
+        return render_template('train.html', dirList=datasetList, backup=backupFileList)
     return render_template("dataset.html")
 
 @app.route('/train')
@@ -145,6 +177,50 @@ def index():
     print("~~~~~~~~~~")
     return render_template('index.html')
 
+def write_log(datasetName, current, paras, classes, config, datasetPath, backupPath):
+    function.add_class('data/voc_'+datasetName+'.names', classes)    
+    classes_size=str(len(classes))
+    os.mkdir("scripts/"+datasetName+"___"+current)
+    function.file_remove("static/test.txt")
+    # 寫 yolov3_voc.cfg 檔案
+    function.read_reversed(classes_size, paras)
+    #  寫 .data 檔
+    cfg_set = "scripts/"+datasetName+"___"+current+"/voc_"+datasetName+".data"
+    copyfile(datasetPath+datasetName+"/voc_"+datasetName+".data", cfg_set)
+    config.CFG_DATA=cfg_set
+    backupDir = backupPath+"/"+datasetName+"___"+current
+    with open(cfg_set, 'a+') as f:
+        f.write("backup = "+backupDir)
+    function.create_dir(backupPath+"/"+datasetName+"___"+current)
+    logPath='scripts/'+datasetName+"___"+current+'/log'
+    function.create_dir(logPath)
+    logfile = open(logPath+'/logfile.log', 'w+')
+    cfg_set = os.getcwd()+'/scripts/'+datasetName+"___"+current+'/voc_'+datasetName+".data"
+    cfg_yolo = os.getcwd()+"/scripts/"+datasetName+"___"+current+"/yolov3_"+datasetName+".cfg"
+    time.sleep(1)
+    # print("./darknet detector train "+cfg_set+" "+cfg_yolo+ " darknet53.conv.74")
+    # p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , "darknet53.conv.74"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    print("./darknet detector train "+cfg_set+" "+cfg_yolo+ " "+paras[6])
+    p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , paras[6]], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    config.PID = p.pid
+    task = TaskData(UserName='ad',TaskName=paras[7],Dataset=paras[0], RunTime=current, MaxBatch=paras[1], BatchSize=paras[3], Subdivisions=paras[4], LearningRate=paras[2], PID=p.pid)
+    db.session.add(task)
+    db.session.commit()
+    config.LIST_PID.append(p.pid)
+    print("======== Add pid  "+ str(config.PID)+" ========")
+    print(config.LIST_PID)
+    for line in p.stdout:
+        sys.stdout.write(line)
+        logfile.write(line)
+    print ('write_log finish')
+    print(str(config.PID) + "   "+str(config.LIST_PID))
+    if config.PID in config.LIST_PID:
+        config.LIST_PID.remove(config.PID)
+        print("======== Del pid  "+ str(config.PID)+" ========")
+        print(config.LIST_PID)
+    with open("static/test.txt", "w+") as f:
+        f.write("")
+
 
 @app.route('/training', methods=['GET', 'POST'])
 def training():
@@ -152,20 +228,23 @@ def training():
     function.file_remove("static/test.txt")
     if not os.path.isfile('darknet53.conv.74'):
         subprocess.Popen(['wget','https://pjreddie.com/media/files/darknet53.conv.74'])
-        
+    
     if request.method == 'POST':
         current = time.strftime("%Y%m%d_%H%M%S", time.localtime())
         config.EPOCH = request.form.get('max_batches')
         datasetName = request.form.get('comp1_select')
         config.DATASET_NAME=datasetName          # Mura_LCD4
-        paras.append(datasetName)
+        paras.append(datasetName)                #[0]
         paras.append(request.form.get('max_batches'))
         paras.append(request.form.get('learning_rate'))
-        paras.append(request.form.get('batch'))
+        paras.append(request.form.get('batch'))   #[3]
         paras.append(request.form.get('subdivisions'))
         paras.append(current)
-        paras.append(request.form.get('comp2_select'))
-        Thread1=threading.Thread(target=function.write_log, args=(datasetName, current, paras, classes, config, datasetPath, backupPath))
+        paras.append(request.form.get('comp2_select'))  #[6]
+        paras.append(request.form.get('task_name'))
+        
+       
+        Thread1=threading.Thread(target=write_log, args=(datasetName, current, paras, classes, config, datasetPath, backupPath))
         Thread1.start()       
         Thread2=threading.Thread(target=function.extract_log, args=(datasetName, current, config))
         Thread2.start()
@@ -211,8 +290,26 @@ def view_training():
         backupDir.append(f)
     if len(backupDir)==0:
         error = "Cannot find any backup"
-        return render_template('view_training.html',error=error)
+        return render_template('view_training.html',error=error, data="")
     config.TEST_DATASET = backupDir[0]
+    time = config.TEST_DATASET.split("___")[-1]
+    task = TaskData.query.filter_by(RunTime=time).first()
+    data=[]
+    data.append(task.TaskName)
+    data.append(task.Dataset)
+    data.append(task.RunTime)
+    data.append(task.MaxBatch)
+    data.append(task.BatchSize)
+    data.append(task.Subdivisions)
+    data.append(task.LearningRate)
+    
+    try:
+        os.kill(task.PID, 0)
+    except OSError:
+        data.append("Close")
+    else:
+        data.append("Training")
+
     if request.method == "POST":
         if 'delBtn' in request.form:            
             del_dir = request.form.getlist('comp0_select')
@@ -225,17 +322,37 @@ def view_training():
                 # 存放 log .data .cfg            
                 shutil.rmtree('static/task/'+dirname, ignore_errors=True)
                 backupDir.remove(dirname)
+                time = dirname.split("___")[-1]
+                print(time)
+                del_task = TaskData.query.filter_by(RunTime=time).first()
+                db.session.delete(del_task)
+                db.session.commit()
         else:
             config.TEST_DATASET = request.form.get('comp0_select')
-            print(request.form.get('comp0_select'))
+            time2 = config.TEST_DATASET.split('___')[-1]
+            task2 = TaskData.query.filter_by(RunTime=time2).first()
+            del data         
+            data=[]
+            data.append(task2.TaskName)
+            data.append(task2.Dataset)
+            data.append(task2.RunTime)
+            data.append(task2.MaxBatch)
+            data.append(task2.BatchSize)
+            data.append(task2.Subdivisions)
+            data.append(task2.LearningRate)        
+            try:
+                os.kill(task2.PID, 0)
+            except OSError:
+                data.append("Close")
+            else:
+                data.append("Training")
 
-    return render_template('view_training.html',size_d=2,tree=backupDir, error=error, dataset=config.TEST_DATASET)
+    return render_template('view_training.html',size_d=2,tree=backupDir, error=error, dataset=config.TEST_DATASET, data=data)
 
 @app.route("/showimg", methods=['GET', 'POST'])
 def showimg():
     image_names = os.listdir('static/Result')
     return render_template("showimg.html", image_names=image_names)
-
 
 @app.route("/test", methods=['GET', 'POST'])
 def test():  
@@ -254,7 +371,7 @@ def test():
     if len(backupDir) > 5:
         size_d = 5
     elif len(backupDir)==0:
-        error = "Cannot find any backup"        
+        error = " Cannot find any backup"        
         return render_template('test.html',error=error)
     else:
         size_d=len(backupDir)
@@ -271,7 +388,6 @@ def test():
     if request.method == "POST":
         if 'del_btn' in request.form:
             print("!!!!   del   !!!!!")
-            print(request.form["form_1"])
             backupfiles = os.listdir(backupPath)
             for dirname in backupfiles:     # 存放 weight
                 print(dirname)
@@ -284,7 +400,9 @@ def test():
             for dirname in file:
                 shutil.rmtree('static/task/'+dirname, ignore_errors=True)
             
-            error = "Cannot find any backup"
+            error = " Cannot find any backup"
+            TaskData.query.delete()
+            db.session.commit()
             return render_template('test.html',error=error)
         
         elif request.form['form_1'] == 'test_start':
@@ -333,4 +451,7 @@ if __name__ == "__main__":
         subprocess.Popen(["make","-j16"])
     function.file_remove("test.txt")
     function.read_record(recordPath, config)
+    # manager.run()
+    db.create_all()
+    
     app.run(debug=True,host='0.0.0.0', port=6060, threaded=True)

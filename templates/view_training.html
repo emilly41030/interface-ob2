@@ -29,46 +29,170 @@
     <body>
         {% include '_navbar.html' %}
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+            {% if error %}
+            <div class="alert alert-danger">
+            <strong>Error:</strong> {{ error }}
+            </div>
+            {% endif %}
             <div class="flex-container">
-                <div style="flex-grow: 1">                
-                {% if error %}
-                <div class="alert alert-danger">
-                <strong>Error:</strong> {{ error }}
-                </div>
-                {% endif %}
-                <h2>YOLO v3</h2>
-                    <form action="{{ url_for('view_training') }}" method="post">
-                        <!-- <label for="FormControlSelect0">Choose Pretrain Model: </label> -->
-                            <select size="30" width=20px name="comp0_select" id="comp0_select" value="comp0_select" onchange="this.form.submit()" class="form-control"  id="FormControlSelect0">
-                            {%- for item in tree recursive %}
-                                {% if item == dataset  %}
-                                    <option selected="selected">{{ dataset }}</option>
-                                {% else %}
-                                    <option>{{ item }}</option>
-                                {%- endif %}
-                            {%- endfor %}
-                        </select>
-                        <br>
-                        <input style="display:none" type="submit" class="btn btn-danger" id="delBtn" value="Delete" name="delBtn">
-                        <input style="display:none" type="submit" class="btn btn-success" id="cancelBtn" value="Cancel" name="cancelBtn">
-                    </form>
-                    <br>                  
-                    <input type="button" class="btn btn-primary" id="edit" value="Edit" name="btn" onclick="create_delBtn()">
-                    <form action="{{ url_for('view_training') }}" method="post">
-                        
-                    </form>
-                </div>
+               
                
                 <!-- <button type="submit" class="btn btn-primary" id="edit_btn" name="edit_btn" value="edit_btn">Edit</button> -->
-                <div style="flex-grow:2">
+                <!-- <div style="flex-grow:2">
                     <br>
                     <br>
                     <br>
                     <br>
                     <div id="mychart"></div>
                     <div id="mychart2"></div>
+                </div> -->
+
+                <div class="col-lg-12 col-xl-3 order-lg-2 order-xl-1">
+                    <!--begin::Portlet-->
+                    <div class="k-portlet k-portlet--height-fluid">
+                        <div class="k-portlet__head">
+                            <div class="k-portlet__head-label">
+                                <h3 class="k-portlet__head-title">Train Models</h3>
+                            </div>                        
+                        </div>
+                        <div class="k-portlet__body k-portlet__body--fit k-portlet__body--fluid">
+                            <div class="k-widget-7">
+                                <div class="k-widget-7__items">                               
+                                    <form action="{{ url_for('view_training') }}" method="post">
+                                        <!-- <label for="FormControlSelect0">Choose Pretrain Model: </label> -->
+                                            <select size="30" width=20px name="comp0_select" id="comp0_select" value="comp0_select" onchange="this.form.submit()" class="form-control"  id="FormControlSelect0">
+                                            {%- for item in tree recursive %}
+                                                {% if item == dataset  %}
+                                                    <option selected="selected">{{ dataset }}</option>
+                                                {% else %}
+                                                    <option>{{ item }}</option>
+                                                {%- endif %}
+                                            {%- endfor %}
+                                        </select>
+                                        <br>
+                                        <input style="display:none" type="submit" class="btn btn-danger" id="delBtn" value="Delete" name="delBtn">
+                                        <input style="display:none" type="submit" class="btn btn-success" id="cancelBtn" value="Cancel" name="cancelBtn">
+                                    </form>
+                                    <form action="{{ url_for('view_training') }}" method="post">
+                                            <input type="button" class="btn btn-primary" id="edit" value="Edit" name="btn" onclick="create_delBtn()">
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                     <!--end::Portlet-->
                 </div>
-            </div>  
+                
+                <div class="col-lg-12 col-xl-8 order-lg-3 order-xl-1">
+                    <!--begin::Portlet-->
+                    <div class="k-portlet k-portlet--height-fluid">
+                        <div class="k-portlet__head k-portlet__head--lg k-portlet__head--noborder k-portlet__head--break-sm">
+                            <div class="k-portlet__head-label">
+                                <h3 class="k-portlet__head-title">Records</h3>
+                            </div>
+                            <!-- <div class="k-portlet__head-toolbar">
+                                <div class="k-portlet__head-wrapper k-form">
+                                    <div class="k-form__group k-form__group--inline k-margin-r-10">
+                                        <div class="k-form__label">Sort By:</div>
+                                        <div class="k-form__control" style="width: 160px;">
+                                            <select class="form-control bootstrap-select" id="k_form_status" title="Status">
+                                                <option value="3">Canceled</option>
+                                                <option value="4">Success</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> -->
+                        </div>
+                        <div class="k-portlet__body k-portlet__body--fit">
+                            <div id="mychart"></div>
+                            <!--Doc: For the datatable initialization refer to "recentOrdersInit" function in "src\theme\app\scripts\custom\dashboard.js" -->
+                            <div class="k-datatable k-datatable--default k-datatable--brand k-datatable--loaded k-datatable--scroll" id="k_recent_orders" style="">
+                                <table class="k-datatable__table" style="display: block; min-height: 300px; max-height: 430px;">
+                                    <thead class="k-datatable__head">
+                                        <tr class="k-datatable__row" style="left: 0px;">
+                                            <th data-field="id" class="k-datatable__cell--center k-datatable__cell k-datatable__cell--check">
+                                                <span style="width: 20px;">
+                                                    <!-- <label class="k-checkbox k-checkbox--single k-checkbox--all k-checkbox--solid k-checkbox--brand">
+                                                        <input type="checkbox">&nbsp;
+                                                    </label> -->
+                                                </span>
+                                            </th>
+                                            <th data-field="employee_id" class="k-datatable__cell k-datatable__cell--sort">
+                                                <span style="width: 151px;">Task Name</span>
+                                            </th>
+                                            <th data-field="name" class="k-datatable__cell k-datatable__cell--sort">
+                                                <span style="width: 130px;">MaxBatch</span>
+                                            </th>
+                                            <th data-field="hire_date" class="k-datatable__cell k-datatable__cell--sort">
+                                                <span style="width: 80px;">BatchSize</span>
+                                            </th>
+                                            <th data-field="status" data-autohide-disabled="false" class="k-datatable__cell k-datatable__cell--sort">
+                                                <span style="width: 110px;">Subdivisions</span>
+                                            </th>
+                                            <th data-field="Actions" data-autohide-disabled="false" class="k-datatable__cell--center k-datatable__cell k-datatable__cell--sort">
+                                                <span style="width: 110px;">LearningRate</span>
+                                            </th>
+                                            <th data-field="Actions" data-autohide-disabled="false" class="k-datatable__cell--center k-datatable__cell k-datatable__cell--sort">
+                                                <span style="width: 100px;">Action</span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody style="max-height: 375.5px;" class="k-datatable__body ps ps--active-y">
+                                        <tr data-row="0" class="k-datatable__row" style="left: 0px;">
+                                            <td class="k-datatable__cell--center k-datatable__cell k-datatable__cell--check" data-field="id">
+                                                <span style="width: 20px;">
+                                                    <!-- <label class="k-checkbox k-checkbox--single k-checkbox--solid k-checkbox--brand">
+                                                        <input type="checkbox" value="1">&nbsp; -->
+                                                    <!-- <span></span> -->
+                                                    </label>
+                                                </span>
+                                            </td>
+                                            {% if data != ""%}
+                                            <td data-field="employee_id" class="k-datatable__cell">
+                                                <span style="width: 151px;">
+                                                    <span class="k-label-font-color-3 k-font-bold">{{data[0]}}</span>
+                                                </span>
+                                            </td>
+                                            <td data-field="name" class="k-datatable__cell">
+                                                <span style="width: 130px;">
+                                                    <span class="k-label-font-color-3 k-font-bold">{{data[3]}}</span>
+                                                </span>
+                                            </td>
+                                            <td data-field="hire_date" class="k-datatable__cell">
+                                                <span style="width: 80px;">{{data[4]}}</span>
+                                            </td>
+                                            <td data-field="status" class="k-datatable__cell">
+                                                <span style="width: 120px;">                                                    
+                                                    <span class="k-label-font-color-3 k-font-bold">{{data[5]}}</span>
+                                                </span>
+                                            </td>
+                                            <td data-field="status" class="k-datatable__cell">
+                                                <span style="width: 120px;">
+                                                    <span class="k-label-font-color-3 k-font-bold">{{data[6]}}</span>
+                                                </span>
+                                            </td>
+                                            <td data-field="status" class="k-datatable__cell">
+                                                <span style="width: 100px;">
+                                                    {% if 'Train' in data[7] %}
+                                                    <span class="k-badge k-badge--danger k-badge--dot k-badge--md"></span>&nbsp;&nbsp;
+                                                    {%  elif "Close" in data[7]  %}
+                                                    <span class="k-badge k-badge--success k-badge--dot k-badge--md"></span>&nbsp;&nbsp;
+                                                    {%  else  %}
+                                                    <span class="k-badge k-badge--info k-badge--dot k-badge--md"></span>&nbsp;&nbsp;
+                                                    {% endif %}
+                                                    <span class="k-label-font-color-3 k-font-bold">{{data[7]}}</span>
+                                                </span>
+                                            </td>
+                                            {% endif %}
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
     </body>
     <script>

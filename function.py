@@ -204,46 +204,7 @@ def create_listName(source_folder):
     fully_train_file.close()
     fully_val_file.close()
 
-def write_log(datasetName, current, paras, classes, config, datasetPath, backupPath):
-    add_class('data/voc_'+datasetName+'.names', classes)    
-    classes_size=str(len(classes))
-    os.mkdir("scripts/"+datasetName+"___"+current)
-    file_remove("static/test.txt")
-    # 寫 yolov3_voc.cfg 檔案
-    read_reversed(classes_size, paras)
-    #  寫 .data 檔
-    cfg_set = "scripts/"+datasetName+"___"+current+"/voc_"+datasetName+".data"
-    copyfile(datasetPath+datasetName+"/voc_"+datasetName+".data", cfg_set)
-    config.CFG_DATA=cfg_set
-    backupDir = backupPath+"/"+datasetName+"___"+current
-    with open(cfg_set, 'a+') as f:
-        f.write("backup = "+backupDir)
-    create_dir(backupPath+"/"+datasetName+"___"+current)
-    logPath='scripts/'+datasetName+"___"+current+'/log'
-    create_dir(logPath)
-    logfile = open(logPath+'/logfile.log', 'w+')
-    cfg_set = os.getcwd()+'/scripts/'+datasetName+"___"+current+'/voc_'+datasetName+".data"
-    cfg_yolo = os.getcwd()+"/scripts/"+datasetName+"___"+current+"/yolov3_"+datasetName+".cfg"
-    time.sleep(1)
-    # print("./darknet detector train "+cfg_set+" "+cfg_yolo+ " darknet53.conv.74")
-    # p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , "darknet53.conv.74"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    print("./darknet detector train "+cfg_set+" "+cfg_yolo+ " "+paras[6])
-    p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , paras[6]], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    config.PID = p.pid
-    config.LIST_PID.append(p.pid)
-    print("======== Add pid  "+ str(config.PID)+" ========")
-    print(config.LIST_PID)
-    for line in p.stdout:
-        sys.stdout.write(line)
-        logfile.write(line)
-    print ('write_log finish')
-    print(str(config.PID) + "   "+str(config.LIST_PID))
-    if config.PID in config.LIST_PID:
-        config.LIST_PID.remove(config.PID)
-        print("======== Del pid  "+ str(config.PID)+" ========")
-        print(config.LIST_PID)
-    with open("static/test.txt", "w+") as f:
-        f.write("")
+
 
 def write_file(log_path, result_dir):
     avg_loss=[]

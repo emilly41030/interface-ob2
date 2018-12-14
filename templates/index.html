@@ -8,5 +8,24 @@
     <span data-feather="home"></span>
  
     
-  </body>
+ 
+    <script src="{{url_for('static',filename='js/jquery.js')}}"></script>
+    <!--Get请求-->
+    <script>
+        var data={
+            'name':'kikay',
+            'age':18
+        }
+        $.ajax({
+            type:'GET',
+            url:'{{url_for("test.test_get")}}',
+            data:data,
+            dataType:'json',//希望服务器返回json格式的数据
+            success:function(data){
+                alert(JSON.stringify(data));
+                alert(data['test'])
+            }
+        });
+    </script>
+ </body>
 </html>

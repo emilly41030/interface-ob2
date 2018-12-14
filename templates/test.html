@@ -22,7 +22,7 @@
                 
                     <form action="{{ url_for('test') }}" method="post">  
                         <div class="form-group">
-                            <label for="FormControlSelect0">Choose dataset: </label>
+                            <label for="FormControlSelect0">Choose model: </label>
                             <select size="{{size_d}}" name="form_1" value="comp0_select" onclick="this.form.submit()" class="form-control" id="FormControlSelect0">
                                 {%- for item in tree recursive %}
                                     {% if item == dataset  %}
