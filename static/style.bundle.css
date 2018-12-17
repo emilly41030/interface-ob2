@@ -15533,7 +15533,7 @@ strong {
       left: 0;
       right: 0; }
     .k-portlet .k-portlet__head.k-portlet__head--lg {
-      min-height: 80px; }
+      min-height: 70px; }
     .k-portlet .k-portlet__head.k-portlet__head--xl {
       min-height: 100px; }
     @media (max-width: 576px) {

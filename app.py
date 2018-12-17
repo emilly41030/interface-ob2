@@ -35,15 +35,16 @@ class TaskData(db.Model):
     Id = db.Column(db.Integer, primary_key=True)
     UserName = db.Column(db.String(64))
     TaskName = db.Column(db.String(64))
-    Dataset = db.Column(db.Integer)
+    Dataset = db.Column(db.String(64))
     RunTime = db.Column(db.String(64))
     MaxBatch = db.Column(db.Integer)
     BatchSize = db.Column(db.Integer)
     Subdivisions = db.Column(db.Integer)
     LearningRate = db.Column(db.Integer)
     PID = db.Column(db.Integer)
-    
-    def __init__(self, UserName, TaskName, Dataset, RunTime, MaxBatch, BatchSize, Subdivisions, LearningRate, PID):      
+    Status = db.Column(db.String(64))
+
+    def __init__(self, UserName, TaskName, Dataset, RunTime, MaxBatch, BatchSize, Subdivisions, LearningRate, PID, Status):      
         self.UserName = UserName
         self.TaskName = TaskName
         self.Dataset = Dataset
@@ -53,7 +54,8 @@ class TaskData(db.Model):
         self.Subdivisions = Subdivisions
         self.LearningRate = LearningRate
         self.PID = PID
-    
+        self.Status=Status
+
 app.config.from_object(config)
 classes = []   #類別資訊
 classNamePath = config.CLASSPATH  #類別名稱
@@ -66,6 +68,7 @@ datasetPath = 'dataset/'
 backupPath = 'scripts/backup'
 recordPath = "static/record.txt"
 resultDir = 'static/Result'
+imgPath = "data"
 
 @app.route('/process', methods=['POST'])
 def pid_process():
@@ -242,7 +245,7 @@ def write_log(datasetName, current, paras, classes, config, datasetPath, backupP
     print("./darknet detector train "+cfg_set+" "+cfg_yolo+ " "+paras[6])
     p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , paras[6]], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     config.PID = p.pid
-    task = TaskData(UserName='ad',TaskName=paras[7],Dataset=paras[0], RunTime=current, MaxBatch=paras[1], BatchSize=paras[3], Subdivisions=paras[4], LearningRate=paras[2], PID=p.pid)
+    task = TaskData(UserName='ad',TaskName=paras[7],Dataset=paras[0], RunTime=current, MaxBatch=paras[1], BatchSize=paras[3], Subdivisions=paras[4], LearningRate=paras[2], PID=p.pid, Status="Traning")
     db.session.add(task)
     db.session.commit()
     config.LIST_PID.append(p.pid)
@@ -251,6 +254,16 @@ def write_log(datasetName, current, paras, classes, config, datasetPath, backupP
     for line in p.stdout:
         sys.stdout.write(line)
         logfile.write(line)
+        if 'CUDA Error' in line:
+            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
+            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
+            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
+            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
+            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
+            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
+            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
+            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
+
     print ('write_log finish')
     print(str(config.PID) + "   "+str(config.LIST_PID))
     if config.PID in config.LIST_PID:
@@ -313,9 +326,7 @@ def option():
         if request.form["btn"] == "Close":
             if (function.check_pid(config.PID)):
                 function.close_pid(config.PID)
-                print("======== Del pid"+ str(config.PID)+" ========")
-                config.LIST_PID.remove(config.PID)
-                print("LIST_PID = "+str(config.LIST_PID))
+                print("======== Del pid"+ str(config.PID)+" ========")            
                         
     return render_template("train.html", pid=config.PID, dirList=datasetList,  backup=backupFileList)
     
@@ -351,7 +362,6 @@ def view_training():
                 db.session.delete(del_task)
                 db.session.commit()
 
-                
         elif 'cancelBtn' in request.form:
             config.TEST_DATASET = request.form.get('comp0_select')
 
@@ -362,77 +372,79 @@ def showimg():
     image_names = os.listdir('static/Result')
     return render_template("showimg.html", image_names=image_names)
 
+@app.route("/test_start/", methods=['GET', 'POST'])
+def test_start():
+    model = request.form.get('model')
+    wei_file = request.form.get('weight')
+    img = request.form.get('img')
+    function.file_remove('predictions.jpg')
+    function.create_dir(resultDir)   
+    dataset = model
+    name = model.split("___")
+                        
+    print("./darknet detector test scripts/"+dataset+"/voc_"+name[0]+".data scripts/"+dataset+"/yolov3_"+name[0]+".cfg scripts/backup/"+dataset+"/"+str(wei_file)+ ' data/'+str(img))
+    p = subprocess.Popen(["./darknet", "detector","test","scripts/"+dataset+"/voc_"+name[0]+".data", "scripts/"+dataset+"/yolov3_"+name[0]+".cfg","scripts/backup/"+dataset+"/"+str(wei_file), 'data/'+str(img)])
+    p.wait()
+    img_name = str(wei_file)+'-'+str(img).split('.')[0]+'.jpg'
+    shutil.move('predictions.jpg', resultDir+"/"+img_name)
+    return jsonify(img_name)
+
 @app.route("/test", methods=['GET', 'POST'])
-def test():  
-    imgPath = "data"
+def test():
+    ###   匯入 backup file ###
     backupDir = []
-    imglist=[]
-    error=None
     size_d = 0
     backupfiles = listdir(backupPath)
     for f in backupfiles:
-        backupDir.append(f)
-    imgfiles = listdir(imgPath)
-    for f in imgfiles:
-        if os.path.splitext(f)[-1] in [".png", ".jpg"]:
-            imglist.append(f)
+        backupDir.append(f)    
+
     if len(backupDir) > 5:
         size_d = 5
     elif len(backupDir)==0:
+        error=None
         error = " Cannot find any backup"        
         return render_template('test.html',error=error)
     else:
         size_d=len(backupDir)
+
+    ###   匯入 backup file 的 weights ###
     name = backupDir[0].split("___")
     # config.DATASET_NAME=backupDir[0]
     config.DATASET_NAME=name[0]
     config.TIME=name[-1]
     childtree = []
     dirfiles = listdir(backupPath+"/"+str(config.DATASET_NAME)+"___"+str(config.TIME))
-    
     for f in dirfiles:
         if 'weight' in f:
             childtree.append(f)
-    if request.method == "POST":
-        if 'del_btn' in request.form:
-            print("!!!!   del   !!!!!")
-            backupfiles = os.listdir(backupPath)
-            for dirname in backupfiles:     # 存放 weight
-                print(dirname)
-                shutil.rmtree(backupPath+'/'+dirname, ignore_errors=True)
-            file = os.listdir('scripts')  # 存放 log .data .cfg
-            for dirname in file:
-                if not dirname=='backup':
-                    shutil.rmtree('scripts/'+dirname, ignore_errors=True)      
-            file = os.listdir('static/task')  # 存放 log .data .cfg
-            for dirname in file:
-                shutil.rmtree('static/task/'+dirname, ignore_errors=True)
-            
-            error = " Cannot find any backup"
-            TaskData.query.delete()
-            db.session.commit()
-            return render_template('test.html',error=error)
-        
-        elif request.form['form_1'] == 'test_start':            
-            function.file_remove('predictions.jpg')
-            function.create_dir(resultDir)
-            if config.TEST_DATASET=="":
-                config.TEST_DATASET = backupDir[0]          
-            dataset = config.TEST_DATASET
-            name = config.TEST_DATASET.split("___")          
-            wei_file = request.form.get('comp1_select')
-            img = request.form.get('comp2_select')
-            print("./darknet detector test scripts/"+dataset+"/voc_"+name[0]+".data scripts/"+dataset+"/yolov3_"+name[0]+".cfg scripts/backup/"+dataset+"/"+str(wei_file)+ ' data/'+str(img))
-            p = subprocess.Popen(["./darknet", "detector","test","scripts/"+dataset+"/voc_"+name[0]+".data", "scripts/"+dataset+"/yolov3_"+name[0]+".cfg","scripts/backup/"+dataset+"/"+str(wei_file), 'data/'+str(img)])
-            p.wait()
-            img_name = str(wei_file)+'-'+dataset+'.jpg'
-            shutil.move('predictions.jpg', resultDir+"/"+img_name)            
-            return render_template("test.html",size_d=size_d, dataset=config.TEST_DATASET,tree=backupDir, childtree=childtree, imglist=imglist, error=error, result=img_name)
-       
-            config.TEST_DATASET=dataset
 
-    return render_template('test.html',size_d=size_d, dataset=config.TEST_DATASET,tree=backupDir, childtree=childtree, imglist=imglist, error=error, result="")
+    ###   匯入 images ###
+    imglist=[]
+    imgfiles = listdir(imgPath)
+    for f in imgfiles:
+        if os.path.splitext(f)[-1] in [".png", ".jpg"]:
+            imglist.append(f)
 
+    return render_template('test.html',size_d=size_d, dataset=config.TEST_DATASET,tree=backupDir, childtree=childtree, imglist=imglist, result="")
+
+@app.route("/del_all/", methods=['GET', 'POST'])
+def del_all():
+    backupfiles = os.listdir(backupPath)
+    for dirname in backupfiles:     # 存放 weight
+        print(dirname)
+        shutil.rmtree(backupPath+'/'+dirname, ignore_errors=True)
+    file = os.listdir('scripts')  # 存放 log .data .cfg
+    for dirname in file:
+        if not dirname=='backup':
+            shutil.rmtree('scripts/'+dirname, ignore_errors=True)      
+    file = os.listdir('static/task')  # 存放 log .data .cfg
+    for dirname in file:
+        shutil.rmtree('static/task/'+dirname, ignore_errors=True)
+    
+    error = " Cannot find any backup"
+    TaskData.query.delete()
+    db.session.commit()
+    return render_template('test.html',error=error)
 
 if __name__ == "__main__":
     app.secret_key = os.urandom(12)

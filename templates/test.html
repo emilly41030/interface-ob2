@@ -16,50 +16,45 @@
                 <h2>YOLO v3</h2>
                 {% if error %}
                 <div class="alert alert-danger">
-                <strong>Error:</strong> {{ error }}        
+                    <strong>Error:</strong> {{ error }}
                 </div>
                 {% endif %}
+                <div class="form-group">
+                    <label for="FormControlSelect0">Choose model: </label>
+                    <select size="{{size_d}}" name="form_1" value="comp0_select" class="form-control" onchange="post_function()" id="FormControlSelect0">
+                        {%- for item in tree recursive %}
+                            {% if item == dataset  %}
+                                <option selected="selected">{{ dataset }}</option>
+                            {% else %}
+                                <option>{{ item }}</option>
+                            {%- endif %}
+                        {%- endfor %}
+                    </select>                    
+                </div>
+                <form id="form1" action="{{ url_for('test') }}" method="post">
+                        <button class="btn btn-primary" name="del_btn" value="del_btn" onclick="del_all()">Delete All</button>
+                </form>
+                <br>
+                <br>
+            
+                <div class="form-group">
+                    <label for="FormControlSelect1">Choose weights: </label>
+                    <select size="5" name="comp1_select" class="form-control" id="FormControlSelect1">
+                            {%- for item in childtree recursive %}
+                                    <option>{{ item }} </option>
+                            {%- endfor %}
+                    </select>
+                <br>
                 
-                    <form action="{{ url_for('test') }}" method="post">  
-                        <div class="form-group">
-                            <label for="FormControlSelect0">Choose model: </label>
-                            <select size="{{size_d}}" name="form_1" value="comp0_select" class="form-control" onchange="post_function()" id="FormControlSelect0">
-                                {%- for item in tree recursive %}
-                                    {% if item == dataset  %}
-                                        <option selected="selected">{{ dataset }}</option>
-                                    {% else %}
-                                        <option>{{ item }}</option>
-                                    {%- endif %}
-                                {%- endfor %}
-                            </select>                    
-                        </div>
-                        <button type="submit" class="btn btn-primary" name="del_btn" value="del_btn">Delete All</button>
-                        <br>
-                        <br>
-                    </form>
-                
-                
-                     <form action="{{ url_for('test') }}" method="post">
-                        <div class="form-group">
-                            <label for="FormControlSelect1">Choose weights: </label>
-                            <select size="5" name="comp1_select" class="form-control" id="FormControlSelect1">
-                                    {%- for item in childtree recursive %}
-                                            <option>{{ item }} </option>
-                                    {%- endfor %}
-                            </select>
-                        <br>
-                        
-                            <label for="FormControlSelect2">Choose Single Image: </label>
-                            <select name="comp2_select" class="form-control" id="FormControlSelect2">
-                            <!-- <sele ct multiple  name="comp2_select" class="form-control" id="FormControlSelect2"> -->
-                                    <!-- <option selected="selected">2008_008556.jpg</option> -->
-                                    {%- for item in imglist recursive %}
-                                            <option>{{ item }} </option>
-                                    {%- endfor %}
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-primary" name="form_1" value="test_start" id="test_start_btn" >Start</button>
-                    </form>
+                    <label for="FormControlSelect2">Choose Single Image: </label>
+                    <select size="10" name="comp2_select" class="form-control" id="FormControlSelect2">                          
+                        {%- for item in imglist recursive %}
+                            <option>{{ item }} </option>
+                        {%- endfor %}
+                    </select>
+                </div>
+                <button class="btn btn-primary" name="form_1" value="test_start" id="test_start_btn" onclick="start_test()" >Start</button>
+        
             </div>
         
             <div style="flex-grow: 2">
@@ -97,19 +92,6 @@
             </style>
 
             <script>
-                $(document).ready(function() {
-                    post_function()
-                    $.ajaxSetup({ cache: false });
-                    $("test_start_btn").click(function(){
-                        $(this).toggleClass('btn btn-primary');
-                        $(this).toggleClass('btn btn-success');
-                    });
-                });
-                var i = 0;               
-                if ( "{{result}}" != ""){                        
-                    document.getElementById("image").src ="static/Result/{{result}}";
-                }
-
                 function post_function()
                 {                    
                     var dirname = document.getElementById("FormControlSelect0").value;
@@ -127,16 +109,64 @@
                           
                             for (var i = 0; i < data['weight'].length; i++)
                             {
-                                toAppend += '<option>'+data['weight'][i]+'</option>';                              
+                                toAppend += '<option>'+data['weight'][i]+'</option>';
                             }
                             $('#FormControlSelect1').append(toAppend);
                         }
                     });
                 }
+
+                function start_test()
+                {
+                    document.getElementById("image").src =""
+                    var model = document.getElementById("FormControlSelect0").value;
+                    var weight = document.getElementById("FormControlSelect1").value;
+                    var img = document.getElementById("FormControlSelect2").value;
+                    if (model =="")
+                        alert("No choose: model ");
+                    else if (weight =="")
+                        alert("No choose: weights ");
+                    else if (img =="")
+                        alert("No choose: img ");
+                    else{
+                        document.getElementById("test_start_btn").disabled = true;
+                        data={
+                            "model":model,
+                            "weight":weight,
+                            "img":img,
+                        }
+                        $.ajax({
+                            type:'POST',
+                            url:'{{url_for("test_start")}}',
+                            data:data,
+                            cache:false,
+                            dataType:'json',
+                            success:function(data){
+                                document.getElementById("image").src ="static/Result/"+data;
+                                document.getElementById("test_start_btn").disabled = false;
+                            }
+                        });
+                    }
+                }
                 
-                </script>
+                function del_all(){
+                    var answer = confirm("Make sure you want to delete all of it !");
+                    console.log(answer)
+                    if (answer == true){
+                        $.ajax({
+                            type:'POST',
+                            url:'{{url_for("del_all")}}',
+                        });
+                        $("#form1").submit(function(e){
+                                console.log("Submitted");
+                        });
+                    }
+                    // else if (answer == false){
+                    //     alert("cancel!");
+                    // }
+                }
 
-
+            </script>
             </div>
         </main>
     </body>
