@@ -23,7 +23,7 @@
                     <form action="{{ url_for('test') }}" method="post">  
                         <div class="form-group">
                             <label for="FormControlSelect0">Choose model: </label>
-                            <select size="{{size_d}}" name="form_1" value="comp0_select" onclick="this.form.submit()" class="form-control" id="FormControlSelect0">
+                            <select size="{{size_d}}" name="form_1" value="comp0_select" class="form-control" onchange="post_function()" id="FormControlSelect0">
                                 {%- for item in tree recursive %}
                                     {% if item == dataset  %}
                                         <option selected="selected">{{ dataset }}</option>
@@ -98,6 +98,7 @@
 
             <script>
                 $(document).ready(function() {
+                    post_function()
                     $.ajaxSetup({ cache: false });
                     $("test_start_btn").click(function(){
                         $(this).toggleClass('btn btn-primary');
@@ -108,7 +109,34 @@
                 if ( "{{result}}" != ""){                        
                     document.getElementById("image").src ="static/Result/{{result}}";
                 }
-            </script>
+
+                function post_function()
+                {                    
+                    var dirname = document.getElementById("FormControlSelect0").value;
+                    var data = {
+                        'dirname':dirname
+                    }
+                    $.ajax({
+                        type:'POST',
+                        url:'{{url_for("test_post")}}',
+                        data:data,
+                        dataType:'json',
+                        success:function(data){
+                            var toAppend = '';
+                            $('#FormControlSelect1').empty();
+                          
+                            for (var i = 0; i < data['weight'].length; i++)
+                            {
+                                toAppend += '<option>'+data['weight'][i]+'</option>';                              
+                            }
+                            $('#FormControlSelect1').append(toAppend);
+                        }
+                    });
+                }
+                
+                </script>
+
+
             </div>
         </main>
     </body>

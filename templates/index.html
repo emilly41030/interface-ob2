@@ -1,31 +1,247 @@
 <!DOCTYPE html>
-<html lang="en">
-  <title></title>
-  <script src="https://unpkg.com/feather-icons"></script> 
-  <body>
- 
-    <!-- example icon -->
-    <span data-feather="home"></span>
- 
+    <head>
+        <title>Deep Learning</title>
+        <link rel="stylesheet" media="screen" href ="static/bootstrap.min.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>   
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.10/c3.min.css" rel="stylesheet"/>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.10/c3.min.js"></script>
+    </head>
     
- 
-    <script src="{{url_for('static',filename='js/jquery.js')}}"></script>
-    <!--Get请求-->
-    <script>
-        var data={
-            'name':'kikay',
-            'age':18
-        }
-        $.ajax({
-            type:'GET',
-            url:'{{url_for("test.test_get")}}',
-            data:data,
-            dataType:'json',//希望服务器返回json格式的数据
-            success:function(data){
-                alert(JSON.stringify(data));
-                alert(data['test'])
+    <body>
+        <style>
+            /* label 和 select 之間的間隔 */
+            form label {
+                width: 20%;
             }
-        });
-    </script>
- </body>
+            .flex-container {
+                    display: flex;
+                }
+    
+            .flex-container > div {          
+                color: black;          
+            }
+            a.list-group-item{
+                font-size: 24px;
+            }
+            input {
+                float:left;
+            }
+        </style>
+        {% include '_navbar.html' %}
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+            {% if error %}
+            <div class="alert alert-danger">
+            <strong>Error:</strong> {{ error }}
+            </div>
+            {% endif %}
+            <div class="flex-container">             
+                <div class="col-lg-12 col-xl-3 order-lg-2 order-xl-1">
+                    <!--begin::Portlet-->
+                    <div class="k-portlet k-portlet--height-fluid">
+                        <div class="k-portlet__head">
+                            <div class="k-portlet__head-label">
+                                <h3 class="k-portlet__head-title">Train Models</h3>
+                            </div>                        
+                        </div>
+                        <div class="k-portlet__body k-portlet__body--fit k-portlet__body--fluid">
+                            <div class="k-widget-7">
+                                <div class="k-widget-7__items">
+                                    <select size="30" width=20px name="comp0_select" id="comp0_select" value="comp0_select" onchange="post_function()" class="form-control"  id="FormControlSelect0">
+                                        {%- for item in tree recursive %}
+                                            {% if item == dataset  %}
+                                                <option selected="selected">{{ dataset }}</option>
+                                            {% else %}
+                                                <option>{{ item }}</option>
+                                            {%- endif %}
+                                        {%- endfor %}
+                                    </select>                                    
+                                    <form action="{{ url_for('view_training') }}" method="post">
+                                        <input style="display:none" type="submit" class="btn btn-danger" id="delBtn" value="Delete" name="delBtn">
+                                        <input style="display:none" type="submit" class="btn btn-success" id="cancelBtn" value="Cancel" name="cancelBtn">
+                                        <input type="button" class="btn btn-primary" id="edit" value="Edit" name="btn" onclick="create_delBtn()">
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                     <!--end::Portlet-->
+                </div>
+                <div class="col-lg-12 col-xl-8 order-lg-3 order-xl-1">
+                    <!--begin::Portlet-->
+                    <div class="k-portlet k-portlet--height-fluid">
+                        <div class="k-portlet__head k-portlet__head--lg k-portlet__head--noborder k-portlet__head--break-sm">
+                            <div class="k-portlet__head-label">
+                                <h3 class="k-portlet__head-title">Records</h3>
+                            </div>
+                           
+                        </div>
+                        <div class="k-portlet__body k-portlet__body--fit">
+                            
+                            <!--Doc: For the datatable initialization refer to "recentOrdersInit" function in "src\theme\app\scripts\custom\dashboard.js" -->
+                            <div class="k-datatable k-datatable--default k-datatable--brand k-datatable--loaded k-datatable--scroll" id="k_recent_orders" style="">
+                                <table class="k-datatable__table" style="display: block; min-height: 100px; max-height: 430px; ">
+                                    <thead class="k-datatable__head">
+                                        <tr class="k-datatable__row" style="left: 0px;">
+                                            <th data-field="id" class="k-datatable__cell--center k-datatable__cell k-datatable__cell--check">
+                                                <span style="width: 20px;">
+                                                    <!-- <label class="k-checkbox k-checkbox--single k-checkbox--all k-checkbox--solid k-checkbox--brand">
+                                                        <input type="checkbox">&nbsp;
+                                                    </label> -->
+                                                </span>
+                                            </th>
+                                            <th data-field="employee_id" class="k-datatable__cell k-datatable__cell--sort">
+                                                <span style="width: 151px;">Task Name</span>
+                                            </th>
+                                            <th data-field="name" class="k-datatable__cell k-datatable__cell--sort">
+                                                <span style="width: 130px;">MaxBatch</span>
+                                            </th>
+                                            <th data-field="hire_date" class="k-datatable__cell k-datatable__cell--sort">
+                                                <span style="width: 80px;">BatchSize</span>
+                                            </th>
+                                            <th data-field="status" data-autohide-disabled="false" class="k-datatable__cell k-datatable__cell--sort">
+                                                <span style="width: 110px;">Subdivisions</span>
+                                            </th>
+                                            <th data-field="Actions" data-autohide-disabled="false" class="k-datatable__cell--center k-datatable__cell k-datatable__cell--sort">
+                                                <span style="width: 110px;">LearningRate</span>
+                                            </th>
+                                            <th data-field="Actions" data-autohide-disabled="false" class="k-datatable__cell--center k-datatable__cell k-datatable__cell--sort">
+                                                <span style="width: 100px;">Action</span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody style="max-height: 375.5px;" class="k-datatable__body ps ps--active-y">
+                                        <tr data-row="0" class="k-datatable__row" style="left: 0px;">
+                                            <td class="k-datatable__cell--center k-datatable__cell k-datatable__cell--check" data-field="id">
+                                                <span style="width: 20px;">
+                                                    <!-- <label class="k-checkbox k-checkbox--single k-checkbox--solid k-checkbox--brand">
+                                                        <input type="checkbox" value="1">&nbsp; -->
+                                                    <!-- <span></span> -->
+                                                    </label>
+                                                </span>
+                                            </td>
+                                            {% if data != ""%}
+                                            <td id='taskname' class="k-datatable__cell">
+                                                <span style="width: 151px;">
+                                                    <span  class="k-label-font-color-3 k-font-bold">{{data[0]}}</span>
+                                                </span>
+                                            </td>
+                                            <td id="maxbatch" class="k-datatable__cell">
+                                                <span style="width: 130px;">
+                                                    <span class="k-label-font-color-3 k-font-bold">{{data[3]}}</span>
+                                                </span>
+                                            </td>
+                                            <td id="batchsize" class="k-datatable__cell">
+                                                <span style="width: 80px;">{{data[4]}}</span>
+                                            </td>
+                                            <td id="sub" class="k-datatable__cell">
+                                                <span style="width: 120px;">                                                    
+                                                    <span class="k-label-font-color-3 k-font-bold">{{data[5]}}</span>
+                                                </span>
+                                            </td>
+                                            <td id="lr" class="k-datatable__cell">
+                                                <span style="width: 120px;">
+                                                    <span class="k-label-font-color-3 k-font-bold">{{data[6]}}</span>
+                                                </span>
+                                            </td>
+                                            <td id="status" class="k-datatable__cell">
+                                                <span style="width: 100px;">
+                                                    {% if 'Train' in data[7] %}
+                                                    <span class="k-badge k-badge--danger k-badge--dot k-badge--md"></span>&nbsp;&nbsp;
+                                                    {%  elif "Close" in data[7]  %}
+                                                    <span class="k-badge k-badge--success k-badge--dot k-badge--md"></span>&nbsp;&nbsp;
+                                                    {%  else  %}
+                                                    <span class="k-badge k-badge--info k-badge--dot k-badge--md"></span>&nbsp;&nbsp;
+                                                    {% endif %}
+                                                    <span class="k-label-font-color-3 k-font-bold">{{data[7]}}</span>
+                                                </span>
+                                            </td>
+                                            {% endif %}
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div id="mychart"></div>
+                                <div id="mychart2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <script>
+            function create_delBtn(){
+                document.getElementById("delBtn").style.display = "block";
+                document.getElementById("cancelBtn").style.display = "block";
+                document.getElementById("edit").style.display = "none";
+                var select_0 = document.getElementById("comp0_select");
+                select_0.onchange = NaN;
+                select_0.multiple = true;
+            }
+    
+            function post_function()
+            {                    
+                var dirname = document.getElementById("comp0_select").value;
+                var data = {
+                    'dirname':dirname
+                }
+                $.ajax({
+                    type:'POST',
+                    url:'{{url_for("test_post")}}',
+                    data:data,
+                    dataType:'json',
+                    success:function(data){
+                        // document.getElementById('e').text = data[0]["TaskName"];
+                        $('#taskname span').text(data[0]["TaskName"]);
+                        $('#maxbatch span').text(data[0]["MaxBatch"]);
+                        $('#batchsize span').text(data[0]["BatchSize"]);
+                        $('#sub span').text(data[0]["Subdivisions"]);
+                        $('#lr span').text(data[0]["LearningRate"]);
+                        $('#status span').text(data[0]["status"]);
+                        
+                        var file = 'static/task/'+dirname+'/AvgLoss.json'
+                        $.getJSON(file, function (externaldata) {
+                            var chart = c3.generate({
+                                title: {
+                                    text:'External JSON loading via C3.js'
+                                },
+                                bindto: '#mychart',
+                                data: {
+                                json: externaldata,
+                                    type: 'area-spline',
+                                }
+                            });
+                        })
+                        var file2 = 'static/task/'+dirname+'/IOU.json'
+                        $.getJSON(file2, function (externaldata2) {
+                            var chart = c3.generate({
+                                bindto: '#mychart2',
+                                data: {
+                                json: externaldata2,
+                                    type: 'area-spline',
+                                }
+                            });
+                        })
+                    }
+                });
+            }
+            
+            function delete_fun()
+            {
+                dirname = document.getElementById('comp0_select').value
+                var data2 = {
+                'dirname':dirname
+                }
+                $.ajax({
+                    type:'POST',
+                    url:'{{url_for("del_post")}}',
+                    data:data2,
+                    dataType:'json',
+                    success:function(data){
+                        $("#select").find(dirname).remove();
+                    }
+                });
+            }
+            </script>
+    </body>
+   
 </html>

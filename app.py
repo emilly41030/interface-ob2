@@ -18,7 +18,7 @@ from shutil import copyfile
 from flask_sqlalchemy import SQLAlchemy
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
-
+import json
 # App config.
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
@@ -42,6 +42,7 @@ class TaskData(db.Model):
     Subdivisions = db.Column(db.Integer)
     LearningRate = db.Column(db.Integer)
     PID = db.Column(db.Integer)
+    
     def __init__(self, UserName, TaskName, Dataset, RunTime, MaxBatch, BatchSize, Subdivisions, LearningRate, PID):      
         self.UserName = UserName
         self.TaskName = TaskName
@@ -80,6 +81,8 @@ def pid_process():
 @app.route('/')
 def home():
     return render_template('home.html')
+
+
 
 @app.route('/dataset', methods=['GET', 'POST'])
 def ImportDataset():
@@ -172,9 +175,47 @@ def train():
         os.remove('static/test.txt')
     return render_template('train.html', dirList=datasetList, pid_size=len(config.LIST_PID), backup=backupFileList)
 
+@app.route('/train_model_post/',methods=['POST','GET']) 
+def train_model_post(): #获取POST数据 
+    config.TEST_DATASET=request.form.get('dirname')
+    time2 = config.TEST_DATASET.split('___')[-1]
+    task = TaskData.query.filter_by(RunTime=time2).first()
+    status=''
+    try:
+        os.kill(task.PID, 0)
+    except OSError:
+        status = "Close"
+    else:
+        status = "Training"
+    data = [{
+        'TaskName':task.TaskName,
+        'Dataset':task.Dataset,
+        'RunTime':task.RunTime,
+        'MaxBatch':task.MaxBatch,
+        'BatchSize':task.BatchSize,
+        'Subdivisions':task.Subdivisions,
+        'LearningRate':task.LearningRate,
+        'status':status
+    }]
+    return jsonify(data)
+
+@app.route('/test_post/',methods=['POST','GET']) 
+def test_post(): #获取POST数据 
+    dataset=request.form.get('dirname')
+    print('dataset = '+str(dataset))
+    childtree = []
+    data={}
+    dirfiles = listdir(backupPath+"/"+str(dataset))
+    for f in dirfiles:
+        if 'weight' in f:   
+            childtree.append(f)
+    data['weight']=childtree
+    config.TEST_DATASET=dataset 
+    print(data)
+    return jsonify(data)
+
 @app.route('/index')
-def index():
-    print("~~~~~~~~~~")
+def index():    
     return render_template('index.html')
 
 def write_log(datasetName, current, paras, classes, config, datasetPath, backupPath):
@@ -198,8 +239,6 @@ def write_log(datasetName, current, paras, classes, config, datasetPath, backupP
     cfg_set = os.getcwd()+'/scripts/'+datasetName+"___"+current+'/voc_'+datasetName+".data"
     cfg_yolo = os.getcwd()+"/scripts/"+datasetName+"___"+current+"/yolov3_"+datasetName+".cfg"
     time.sleep(1)
-    # print("./darknet detector train "+cfg_set+" "+cfg_yolo+ " darknet53.conv.74")
-    # p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , "darknet53.conv.74"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     print("./darknet detector train "+cfg_set+" "+cfg_yolo+ " "+paras[6])
     p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , paras[6]], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     config.PID = p.pid
@@ -290,31 +329,15 @@ def view_training():
         backupDir.append(f)
     if len(backupDir)==0:
         error = "Cannot find any backup"
-        return render_template('view_training.html',error=error, data="")
+        return render_template('view_training.html',error=error)
     config.TEST_DATASET = backupDir[0]
-    time = config.TEST_DATASET.split("___")[-1]
-    task = TaskData.query.filter_by(RunTime=time).first()
-    data=[]
-    data.append(task.TaskName)
-    data.append(task.Dataset)
-    data.append(task.RunTime)
-    data.append(task.MaxBatch)
-    data.append(task.BatchSize)
-    data.append(task.Subdivisions)
-    data.append(task.LearningRate)
-    
-    try:
-        os.kill(task.PID, 0)
-    except OSError:
-        data.append("Close")
-    else:
-        data.append("Training")
 
     if request.method == "POST":
-        if 'delBtn' in request.form:            
+        if 'delBtn' in request.form:
             del_dir = request.form.getlist('comp0_select')
+            
             for dirname in del_dir:     # 存放 weight
-                print(dirname)
+                print(del_dir)
                 shutil.rmtree(backupPath+'/'+dirname, ignore_errors=True)
                 # 存放 log .data .cfg
                 if not dirname=='backup':
@@ -327,27 +350,12 @@ def view_training():
                 del_task = TaskData.query.filter_by(RunTime=time).first()
                 db.session.delete(del_task)
                 db.session.commit()
-        else:
-            config.TEST_DATASET = request.form.get('comp0_select')
-            time2 = config.TEST_DATASET.split('___')[-1]
-            task2 = TaskData.query.filter_by(RunTime=time2).first()
-            del data         
-            data=[]
-            data.append(task2.TaskName)
-            data.append(task2.Dataset)
-            data.append(task2.RunTime)
-            data.append(task2.MaxBatch)
-            data.append(task2.BatchSize)
-            data.append(task2.Subdivisions)
-            data.append(task2.LearningRate)        
-            try:
-                os.kill(task2.PID, 0)
-            except OSError:
-                data.append("Close")
-            else:
-                data.append("Training")
 
-    return render_template('view_training.html',size_d=2,tree=backupDir, error=error, dataset=config.TEST_DATASET, data=data)
+                
+        elif 'cancelBtn' in request.form:
+            config.TEST_DATASET = request.form.get('comp0_select')
+
+    return render_template('view_training.html',size_d=2,tree=backupDir, error=error, dataset=config.TEST_DATASET)
 
 @app.route("/showimg", methods=['GET', 'POST'])
 def showimg():
@@ -405,16 +413,13 @@ def test():
             db.session.commit()
             return render_template('test.html',error=error)
         
-        elif request.form['form_1'] == 'test_start':
-            print("TEST !!!!!!!!!!!!!!")
+        elif request.form['form_1'] == 'test_start':            
             function.file_remove('predictions.jpg')
             function.create_dir(resultDir)
             if config.TEST_DATASET=="":
-                config.TEST_DATASET = backupDir[0]
-            print(config.TEST_DATASET)
+                config.TEST_DATASET = backupDir[0]          
             dataset = config.TEST_DATASET
-            name = config.TEST_DATASET.split("___")
-            print("dataset = "+dataset)
+            name = config.TEST_DATASET.split("___")          
             wei_file = request.form.get('comp1_select')
             img = request.form.get('comp2_select')
             print("./darknet detector test scripts/"+dataset+"/voc_"+name[0]+".data scripts/"+dataset+"/yolov3_"+name[0]+".cfg scripts/backup/"+dataset+"/"+str(wei_file)+ ' data/'+str(img))
@@ -423,19 +428,7 @@ def test():
             img_name = str(wei_file)+'-'+dataset+'.jpg'
             shutil.move('predictions.jpg', resultDir+"/"+img_name)            
             return render_template("test.html",size_d=size_d, dataset=config.TEST_DATASET,tree=backupDir, childtree=childtree, imglist=imglist, error=error, result=img_name)
-
-        else:
-            print("!!!!   change   !!!!!")
-            print(request.form["form_1"])          
-            dataset = request.form.get('form_1') 
-            print('dataset = '+str(dataset))
-            del childtree
-            childtree=[]
-            dirfiles = listdir(backupPath+"/"+str(dataset))
-            for f in dirfiles:
-                if 'weight' in f:
-                    childtree.append(f)
-                
+       
             config.TEST_DATASET=dataset
 
     return render_template('test.html',size_d=size_d, dataset=config.TEST_DATASET,tree=backupDir, childtree=childtree, imglist=imglist, error=error, result="")
