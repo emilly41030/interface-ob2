@@ -182,14 +182,7 @@ def train():
 def train_model_post(): #获取POST数据 
     config.TEST_DATASET=request.form.get('dirname')
     time2 = config.TEST_DATASET.split('___')[-1]
-    task = TaskData.query.filter_by(RunTime=time2).first()
-    status=''
-    try:
-        os.kill(task.PID, 0)
-    except OSError:
-        status = "Close"
-    else:
-        status = "Training"
+    task = TaskData.query.filter_by(RunTime=time2).first()   
     data = [{
         'TaskName':task.TaskName,
         'Dataset':task.Dataset,
@@ -198,14 +191,14 @@ def train_model_post(): #获取POST数据
         'BatchSize':task.BatchSize,
         'Subdivisions':task.Subdivisions,
         'LearningRate':task.LearningRate,
-        'status':status
+        'status':task.Status
     }]
     return jsonify(data)
 
 @app.route('/test_post/',methods=['POST','GET']) 
 def test_post(): #获取POST数据 
     dataset=request.form.get('dirname')
-    print('dataset = '+str(dataset))
+    # print('dataset = '+str(dataset))
     childtree = []
     data={}
     dirfiles = listdir(backupPath+"/"+str(dataset))
@@ -214,7 +207,7 @@ def test_post(): #获取POST数据
             childtree.append(f)
     data['weight']=childtree
     config.TEST_DATASET=dataset 
-    print(data)
+    # print(data)
     return jsonify(data)
 
 @app.route('/index')
@@ -249,27 +242,25 @@ def write_log(datasetName, current, paras, classes, config, datasetPath, backupP
     db.session.add(task)
     db.session.commit()
     config.LIST_PID.append(p.pid)
-    print("======== Add pid  "+ str(config.PID)+" ========")
-    print(config.LIST_PID)
+    # print("======== Add pid  "+ str(config.PID)+" ========")
+    # print(config.LIST_PID)
+    is_error = False
     for line in p.stdout:
         sys.stdout.write(line)
         logfile.write(line)
         if 'CUDA Error' in line:
-            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
-            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
-            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
-            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
-            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
-            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
-            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
-            print("!!!!!!!!!!!!!~~~~~~~~~~~~~~~!!!!!!!!!!!!!!~~~~~~~~~~~~~!!!!!!!!!!!!~~~~~~~~~~~~~")
-
+            task3 = TaskData.query.filter_by(PID=p.pid).first()
+            task3.Status = "Error"
+            db.session.commit()
+            is_error=True
     print ('write_log finish')
-    print(str(config.PID) + "   "+str(config.LIST_PID))
-    if config.PID in config.LIST_PID:
-        config.LIST_PID.remove(config.PID)
-        print("======== Del pid  "+ str(config.PID)+" ========")
-        print(config.LIST_PID)
+   
+    if not is_error:
+        task3 = TaskData.query.filter_by(PID=p.pid).first()
+        if not task3.Status=="Abort":
+            task3.Status = "Success"
+        db.session.commit()
+
     with open("static/test.txt", "w+") as f:
         f.write("")
 
@@ -293,8 +284,7 @@ def training():
         paras.append(request.form.get('subdivisions'))
         paras.append(current)
         paras.append(request.form.get('comp2_select'))  #[6]
-        paras.append(request.form.get('task_name'))
-        
+        paras.append(request.form.get('task_name'))        
        
         Thread1=threading.Thread(target=write_log, args=(datasetName, current, paras, classes, config, datasetPath, backupPath))
         Thread1.start()       
@@ -326,7 +316,10 @@ def option():
         if request.form["btn"] == "Close":
             if (function.check_pid(config.PID)):
                 function.close_pid(config.PID)
-                print("======== Del pid"+ str(config.PID)+" ========")            
+                # print("======== Del pid"+ str(config.PID)+" ========")
+                task3 = TaskData.query.filter_by(PID=config.PID).first()
+                task3.Status = "Abort"
+                db.session.commit()
                         
     return render_template("train.html", pid=config.PID, dirList=datasetList,  backup=backupFileList)
     
@@ -348,7 +341,7 @@ def view_training():
             del_dir = request.form.getlist('comp0_select')
             
             for dirname in del_dir:     # 存放 weight
-                print(del_dir)
+                # print(del_dir)
                 shutil.rmtree(backupPath+'/'+dirname, ignore_errors=True)
                 # 存放 log .data .cfg
                 if not dirname=='backup':
@@ -357,7 +350,7 @@ def view_training():
                 shutil.rmtree('static/task/'+dirname, ignore_errors=True)
                 backupDir.remove(dirname)
                 time = dirname.split("___")[-1]
-                print(time)
+                # print(time)
                 del_task = TaskData.query.filter_by(RunTime=time).first()
                 db.session.delete(del_task)
                 db.session.commit()
@@ -372,8 +365,8 @@ def showimg():
     image_names = os.listdir('static/Result')
     return render_template("showimg.html", image_names=image_names)
 
-@app.route("/test_start/", methods=['GET', 'POST'])
-def test_start():
+@app.route("/test_start_post/", methods=['GET', 'POST'])
+def test_start_post():
     model = request.form.get('model')
     wei_file = request.form.get('weight')
     img = request.form.get('img')
@@ -388,6 +381,11 @@ def test_start():
     img_name = str(wei_file)+'-'+str(img).split('.')[0]+'.jpg'
     shutil.move('predictions.jpg', resultDir+"/"+img_name)
     return jsonify(img_name)
+
+@app.route("/training_status_post/", methods=['GET', 'POST'])
+def training_status_post():
+    task3 = TaskData.query.filter_by(PID=config.PID).first()
+    return jsonify(task3.Status)
 
 @app.route("/test", methods=['GET', 'POST'])
 def test():
@@ -427,11 +425,11 @@ def test():
 
     return render_template('test.html',size_d=size_d, dataset=config.TEST_DATASET,tree=backupDir, childtree=childtree, imglist=imglist, result="")
 
-@app.route("/del_all/", methods=['GET', 'POST'])
-def del_all():
+@app.route("/del_all_post/", methods=['GET', 'POST'])
+def del_all_post():
     backupfiles = os.listdir(backupPath)
     for dirname in backupfiles:     # 存放 weight
-        print(dirname)
+        # print(dirname)
         shutil.rmtree(backupPath+'/'+dirname, ignore_errors=True)
     file = os.listdir('scripts')  # 存放 log .data .cfg
     for dirname in file:

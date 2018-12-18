@@ -137,7 +137,7 @@
                         }
                         $.ajax({
                             type:'POST',
-                            url:'{{url_for("test_start")}}',
+                            url:'{{url_for("test_start_post")}}',
                             data:data,
                             cache:false,
                             dataType:'json',
@@ -155,10 +155,10 @@
                     if (answer == true){
                         $.ajax({
                             type:'POST',
-                            url:'{{url_for("del_all")}}',
+                            url:'{{url_for("del_all_post")}}',
                         });
                         $("#form1").submit(function(e){
-                                console.log("Submitted");
+                            alert("Succuess");
                         });
                     }
                     // else if (answer == false){

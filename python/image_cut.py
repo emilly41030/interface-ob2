@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from os import walk
 
 
-scale = 0.3
+image_size=416
 img_path = '/home/kelly/Desktop/interface-ob2/dataset/Mura_LCD4/Mura/LCD4/JPEGImages'
 label_path = '/home/kelly/Desktop/interface-ob2/dataset/Mura_LCD4/Mura/LCD4/labels'
 # out_path = '/home/kelly/Desktop/interface-ob2/dataset/Mura_LCD4/Mura/LCD4/scale_jpg'
@@ -29,7 +29,9 @@ def scale_and_draw():
             im = Image.open(img_path+"/"+f_name+".jpg")
             w, h= im.size
             #####   圖片縮小 scale 倍 #####
-            im = im.resize((int(w*scale), int(h*scale)),Image.ANTIALIAS)
+            new_w = w/image_size
+            new_h = h/image_size
+            im = im.resize((int(w*new_w), int(h*new_h)),Image.ANTIALIAS)
             rgb_im = im.convert('RGB')
             rgb_im.save(out_path+"/"+f_name+".jpg")
             #############################
@@ -109,4 +111,4 @@ def draw():
                     temp.save(out_path+"/"+f_name+".jpg")
 
                 del draw
-draw()
+scale_and_draw()

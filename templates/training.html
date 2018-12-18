@@ -76,11 +76,14 @@
                         <div class="alert alert-success" id="finish" role="alert" style="display:none">
                                 <strong>Well done!</strong> successfully.
                         </div>
+                        <div class="alert alert-danger" id="error" role="alert" style="display:none">
+                                <strong>Error!</strong> CUDA Error: out of memory.
+                        </div>
                         <div class="alert alert-info" id="process" role="alert">
                             <strong>Training!</strong> waiting....
                         </div>
-                        <div id="combined-graph" class="combined-graph"
-                            style="height:500px;width:100%;background:white;display:none;"></div>
+                        <!-- <div id="combined-graph" class="combined-graph"
+                            style="height:500px;width:100%;background:white;display:none;"></div> -->
                     </div>
                 </form>
                 <div id="mychart"></div>
@@ -97,24 +100,31 @@
 
                 var finish = false;
                 var is_first = true;           
-                var t2 = window.setInterval(()=>{
+                var t2 = window.setInterval(()=>{                    
                     $.ajax({
-                        cache:false, 
-                        url:'static/test.txt',
-                        success: function(){
-                            $("#finish").show();
-                            $("#process").hide();
-                            finish=true
-                            document.getElementById("close_btn").disabled =true;
-                            document.getElementById("btn_train").disabled = false;
-                            document.getElementById("btn_test").disabled = false;
-                            clearInterval(t2);
-                            $(document).ready(function(){
-                                $("#b1").hide();
-                                $("#b2").show();
-                            })
+                        type:'POST',
+                        url:'{{url_for("training_status_post")}}',
+                        dataType:'json',
+                        success:function(data){
+                            if(data=="Success"){                              
+                                $("#finish").show();
+                                $("#process").hide();
+                                document.getElementById("close_btn").disabled =true;
+                                document.getElementById("btn_train").disabled = false;
+                                document.getElementById("btn_test").disabled = false;
+                                clearInterval(t2);
+                            }
+                            else if(data=="Error"){                              
+                                $("#error").show();
+                                $("#process").hide();
+                                document.getElementById("close_btn").disabled =true;
+                                document.getElementById("btn_train").disabled = false;
+                                document.getElementById("btn_test").disabled = false;
+                                clearInterval(t2);
+                            }                           
                         },
                     });
+
                     $.ajax({
                         cache:false,
                         url:file1,
