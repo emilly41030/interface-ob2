@@ -41,10 +41,12 @@ class TaskData(db.Model):
     BatchSize = db.Column(db.Integer)
     Subdivisions = db.Column(db.Integer)
     LearningRate = db.Column(db.Integer)
-    PID = db.Column(db.Integer)
-    Status = db.Column(db.String(64))
+    PreModel = db.Column(db.String(64))
+    PID = db.Column(db.Integer)    
+    Status = db.Column(db.String(64))    
+    Description = db.Column(db.String(64))
 
-    def __init__(self, UserName, TaskName, Dataset, RunTime, MaxBatch, BatchSize, Subdivisions, LearningRate, PID, Status):      
+    def __init__(self, UserName, TaskName, Dataset, RunTime, MaxBatch, BatchSize, Subdivisions, LearningRate, PreModel, PID, Status, Description):      
         self.UserName = UserName
         self.TaskName = TaskName
         self.Dataset = Dataset
@@ -53,8 +55,10 @@ class TaskData(db.Model):
         self.BatchSize = BatchSize
         self.Subdivisions = Subdivisions
         self.LearningRate = LearningRate
+        self.PreModel = PreModel
         self.PID = PID
-        self.Status=Status
+        self.Status=Status      
+        self.Description = Description
 
 app.config.from_object(config)
 classes = []   #類別資訊
@@ -238,27 +242,32 @@ def write_log(datasetName, current, paras, classes, config, datasetPath, backupP
     print("./darknet detector train "+cfg_set+" "+cfg_yolo+ " "+paras[6])
     p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , paras[6]], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     config.PID = p.pid
-    task = TaskData(UserName='ad',TaskName=paras[7],Dataset=paras[0], RunTime=current, MaxBatch=paras[1], BatchSize=paras[3], Subdivisions=paras[4], LearningRate=paras[2], PID=p.pid, Status="Traning")
+    task = TaskData(UserName='ad',TaskName=paras[7],Dataset=paras[0], RunTime=current, MaxBatch=paras[1], BatchSize=paras[3], Subdivisions=paras[4], LearningRate=paras[2], PreModel=paras[8], PID=p.pid, Status="Training", Description="")
     db.session.add(task)
     db.session.commit()
     config.LIST_PID.append(p.pid)
     # print("======== Add pid  "+ str(config.PID)+" ========")
     # print(config.LIST_PID)
     is_error = False
+    task3 = TaskData.query.filter_by(PID=p.pid).first()
     for line in p.stdout:
         sys.stdout.write(line)
         logfile.write(line)
-        if 'CUDA Error' in line:
-            task3 = TaskData.query.filter_by(PID=p.pid).first()
-            task3.Status = "Error"
+        if 'CUDA Error' in line:           
+            task.Status = "Error"
+            task.Description = line
             db.session.commit()
             is_error=True
+        elif 'Cannot load image' in line:            
+            task.Status = "Error"
+            task.Description = line
+            db.session.commit()
+            is_error=True
+
     print ('write_log finish')
-   
     if not is_error:
-        task3 = TaskData.query.filter_by(PID=p.pid).first()
-        if not task3.Status=="Abort":
-            task3.Status = "Success"
+        if not task.Status=="Abort":
+            task.Status = "Success"
         db.session.commit()
 
     with open("static/test.txt", "w+") as f:
@@ -284,8 +293,8 @@ def training():
         paras.append(request.form.get('subdivisions'))
         paras.append(current)
         paras.append(request.form.get('comp2_select'))  #[6]
-        paras.append(request.form.get('task_name'))        
-       
+        paras.append(request.form.get('task_name'))
+        paras.append(request.form.get('comp2_select'))
         Thread1=threading.Thread(target=write_log, args=(datasetName, current, paras, classes, config, datasetPath, backupPath))
         Thread1.start()       
         Thread2=threading.Thread(target=function.extract_log, args=(datasetName, current, config))
@@ -362,7 +371,11 @@ def view_training():
 
 @app.route("/showimg", methods=['GET', 'POST'])
 def showimg():
-    image_names = os.listdir('static/Result')
+    image_names = os.listdir(resultDir)
+    if request.method == "POST":
+        shutil.rmtree(resultDir, ignore_errors=True)
+        del image_names
+        image_names=[]
     return render_template("showimg.html", image_names=image_names)
 
 @app.route("/test_start_post/", methods=['GET', 'POST'])
@@ -384,8 +397,12 @@ def test_start_post():
 
 @app.route("/training_status_post/", methods=['GET', 'POST'])
 def training_status_post():
-    task3 = TaskData.query.filter_by(PID=config.PID).first()
-    return jsonify(task3.Status)
+    task = TaskData.query.filter_by(PID=config.PID).first()
+    data = [{      
+        'status':task.Status,
+        'Description':task.Description
+    }]
+    return jsonify(data)
 
 @app.route("/test", methods=['GET', 'POST'])
 def test():

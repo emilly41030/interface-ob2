@@ -238,7 +238,7 @@ def write_file(log_path, result_dir):
 def extract_log(datasetName, current, config):
     time.sleep(10)
     log_path = 'scripts/'+datasetName+"___"+current+'/log/logfile.log'
-   
+    
     result_dir = 'static/task/'+datasetName+"___"+current
     create_dir('static/task/')
     create_dir(result_dir)

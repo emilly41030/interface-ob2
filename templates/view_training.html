@@ -48,16 +48,15 @@
                             <div class="k-widget-7">
                                 <div class="k-widget-7__items">
                                     <form action="{{ url_for('view_training') }}" method="post">
-                                    <select size="30" width=20px name="comp0_select" id="comp0_select" value="comp0_select" onchange="post_function()" class="form-control"  id="FormControlSelect0">
-                                        {%- for item in tree recursive %}
-                                            {% if item == dataset  %}
-                                                <option selected="selected">{{ dataset }}</option>
-                                            {% else %}
-                                                <option>{{ item }}</option>
-                                            {%- endif %}
-                                        {%- endfor %}
-                                    </select>                                    
-                                    
+                                        <select size="30" width=20px name="comp0_select" id="comp0_select" value="comp0_select" onchange="post_function()" class="form-control"  id="FormControlSelect0">
+                                            {%- for item in tree recursive %}
+                                                {% if item == dataset  %}
+                                                    <option selected="selected">{{ dataset }}</option>
+                                                {% else %}
+                                                    <option>{{ item }}</option>
+                                                {%- endif %}
+                                            {%- endfor %}
+                                        </select>
                                         <input style="display:none" type="submit" class="btn btn-danger" id="delBtn" value="Delete" name="delBtn">
                                         <input style="display:none" type="submit" class="btn btn-success" id="cancelBtn" value="Cancel" name="cancelBtn">
                                         <input type="button" class="btn btn-primary" id="edit" value="Edit" name="btn" onclick="create_delBtn()">

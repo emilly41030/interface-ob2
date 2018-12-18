@@ -106,7 +106,8 @@
                         url:'{{url_for("training_status_post")}}',
                         dataType:'json',
                         success:function(data){
-                            if(data=="Success"){                              
+                            console.log(data[0]["status"]);
+                            if(data[0]["status"]=="Success"){
                                 $("#finish").show();
                                 $("#process").hide();
                                 document.getElementById("close_btn").disabled =true;
@@ -114,14 +115,15 @@
                                 document.getElementById("btn_test").disabled = false;
                                 clearInterval(t2);
                             }
-                            else if(data=="Error"){                              
+                            else if(data[0]["status"]=="Error"){
                                 $("#error").show();
+                                $("#error").text(data[0]["Description"])
                                 $("#process").hide();
                                 document.getElementById("close_btn").disabled =true;
                                 document.getElementById("btn_train").disabled = false;
                                 document.getElementById("btn_test").disabled = false;
                                 clearInterval(t2);
-                            }                           
+                            }
                         },
                     });
 
