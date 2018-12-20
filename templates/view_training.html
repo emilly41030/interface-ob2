@@ -27,6 +27,9 @@
             input {
                 float:left;
             }
+            .badge {
+                margin:3px;    
+            }
         </style>
         {% include '_navbar.html' %}
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-1">
@@ -41,7 +44,11 @@
                     <div class="k-portlet k-portlet--height-fluid">
                         <div class="k-portlet__head">
                             <div class="k-portlet__head-label">
-                                <h3 class="k-portlet__head-title">Train Models</h3>
+                                <h3 class="k-portlet__head-title">Train Models</h3>                                
+                                <!-- <a href="#" class="badge badge-primary" >  All  </a>
+                                <a href="#" class="badge badge-success">Success</a>
+                                <a href="#" class="badge badge-danger">Error</a>
+                                <a href="#" class="badge badge-warning">Abort</a> -->
                             </div>                        
                         </div>
                         <div class="k-portlet__body k-portlet__body--fit k-portlet__body--fluid">
@@ -57,7 +64,8 @@
                                                 {%- endif %}
                                             {%- endfor %}
                                         </select>
-                                        <input style="display:none" type="submit" class="btn btn-danger" id="delBtn" value="Delete" name="delBtn">
+                                        <br>
+                                        <input style="display:none" type="submit" class="btn btn-danger" id="delBtn" value="Delete(mul)" name="delBtn">
                                         <input style="display:none" type="submit" class="btn btn-success" id="cancelBtn" value="Cancel" name="cancelBtn">
                                         <input type="button" class="btn btn-primary" id="edit" value="Edit" name="btn" onclick="create_delBtn()">
                                     </form>
@@ -74,7 +82,11 @@
                             <div class="k-portlet__head-label">
                                 <h3 class="k-portlet__head-title">Records</h3>
                             </div>
-                           
+                            <div class="k-portlet__head-toolbar">
+                                <div class="k-portlet__head-wrapper k-form">                                   
+                                    <input type="button" class="btn btn-primary" onclick="test_port()" value="Test"></input>
+                                </div>
+                            </div>
                         </div>
                         <div class="k-portlet__body k-portlet__body--fit">
                             
@@ -217,6 +229,23 @@
                                 }
                             });
                         })
+                    }
+                });
+            }
+
+            function test_port()
+            {
+                var dirname = document.getElementById("comp0_select").value;
+                var data = {
+                    'dirname':dirname
+                }
+                $.ajax({
+                    type:'POST',
+                    url:'{{url_for("view_training_test_post")}}',
+                    data:data,
+                    dataType:'json',
+                    success:function(data){
+                        window.location.href = "test";
                     }
                 });
             }

@@ -235,24 +235,7 @@ def write_file(log_path, result_dir):
             data = {"IOU":iou}
             json.dump(data, outfile2)
 
-def extract_log(datasetName, current, config):
-    time.sleep(10)
-    log_path = 'scripts/'+datasetName+"___"+current+'/log/logfile.log'
-    
-    result_dir = 'static/task/'+datasetName+"___"+current
-    create_dir('static/task/')
-    create_dir(result_dir)
-    log_size = 1               #紀錄 log 檔案有沒有變化
-   
-    while not (os.path.isfile("static/test.txt")):
-        print("config.pid=" + str(config.PID))       
-        if (log_size != os.path.getsize(log_path) and os.path.getsize(log_path) != 0):
-            print("log_size="+str(log_size))
-            log_size = os.path.getsize(log_path)
-            write_file(log_path, result_dir)
-        time.sleep(5)
-    write_file(log_path, result_dir)
-    print("extract_log finish !!!!!")
+
 
 
 def read_reversed(classes, paras):    

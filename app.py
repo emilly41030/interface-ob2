@@ -89,8 +89,6 @@ def pid_process():
 def home():
     return render_template('home.html')
 
-
-
 @app.route('/dataset', methods=['GET', 'POST'])
 def ImportDataset():
     if request.method == 'POST':       
@@ -248,31 +246,51 @@ def write_log(datasetName, current, paras, classes, config, datasetPath, backupP
     config.LIST_PID.append(p.pid)
     # print("======== Add pid  "+ str(config.PID)+" ========")
     # print(config.LIST_PID)
-    is_error = False
-    task3 = TaskData.query.filter_by(PID=p.pid).first()
+    
+    max_batches = paras[1]
     for line in p.stdout:
         sys.stdout.write(line)
         logfile.write(line)
         if 'CUDA Error' in line:           
             task.Status = "Error"
             task.Description = line
-            db.session.commit()
-            is_error=True
+            db.session.commit()          
         elif 'Cannot load image' in line:            
             task.Status = "Error"
             task.Description = line
+            db.session.commit()          
+        elif " "+max_batches+' images' in line:
+            task.Status = "Success"
             db.session.commit()
-            is_error=True
 
     print ('write_log finish')
-    if not is_error:
-        if not task.Status=="Abort":
-            task.Status = "Success"
-        db.session.commit()
+   
+    if not task.Status=="Abort":
+        if not task.Status == "Success":
+            task.Status = "Error"
+            task.Description = "Exception occurs (Maybe max batch set too small or Pre-train model error)"
+            db.session.commit()
 
     with open("static/test.txt", "w+") as f:
         f.write("")
 
+def extract_log(datasetName, current):
+    time.sleep(10)
+    task = TaskData.query.filter_by(RunTime=current).first()    
+    log_path = 'scripts/'+datasetName+"___"+current+'/log/logfile.log'
+    
+    result_dir = 'static/task/'+datasetName+"___"+current
+    function.create_dir('static/task/')
+    function.create_dir(result_dir)
+    log_size = 1               #紀錄 log 檔案有沒有變化  
+    while (task.Status=="Training"):        
+        if (log_size != os.path.getsize(log_path) and os.path.getsize(log_path) != 0):
+            print("log_size="+str(log_size))
+            log_size = os.path.getsize(log_path)
+            function.write_file(log_path, result_dir)
+        time.sleep(5)
+    function.write_file(log_path, result_dir)
+    print("extract_log finish !!!!!")
 
 @app.route('/training', methods=['GET', 'POST'])
 def training():
@@ -296,8 +314,8 @@ def training():
         paras.append(request.form.get('task_name'))
         paras.append(request.form.get('comp2_select'))
         Thread1=threading.Thread(target=write_log, args=(datasetName, current, paras, classes, config, datasetPath, backupPath))
-        Thread1.start()       
-        Thread2=threading.Thread(target=function.extract_log, args=(datasetName, current, config))
+        Thread1.start()
+        Thread2=threading.Thread(target=extract_log, args=(datasetName, current))
         Thread2.start()
         time.sleep(1)
         filepath = datasetName+"___"+current
@@ -332,7 +350,12 @@ def option():
                         
     return render_template("train.html", pid=config.PID, dirList=datasetList,  backup=backupFileList)
     
-
+@app.route("/view_training_test_post", methods=['GET', 'POST'])
+def view_training_test_post():
+    config.TEST_DATASET=request.form.get('dirname')
+    print(config.TEST_DATASET)
+    return "0"
+    
 @app.route("/view_training", methods=['GET', 'POST'])
 def view_training():
     backupDir=[]
@@ -424,11 +447,15 @@ def test():
 
     ###   匯入 backup file 的 weights ###
     name = backupDir[0].split("___")
-    # config.DATASET_NAME=backupDir[0]
-    config.DATASET_NAME=name[0]
-    config.TIME=name[-1]
+    dirfiles=[]
     childtree = []
-    dirfiles = listdir(backupPath+"/"+str(config.DATASET_NAME)+"___"+str(config.TIME))
+    # config.DATASET_NAME=backupDir[0]
+    if config.TEST_DATASET =="":
+        config.DATASET_NAME=name[0]
+        config.TIME=name[-1]        
+        dirfiles = listdir(backupPath+"/"+str(config.DATASET_NAME)+"___"+str(config.TIME))
+    else:
+        dirfiles = listdir(backupPath+"/"+config.TEST_DATASET)
     for f in dirfiles:
         if 'weight' in f:
             childtree.append(f)
