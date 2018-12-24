@@ -15481,7 +15481,7 @@ strong {
     -ms-flex-pack: justify;
     justify-content: space-between;
     position: relative;
-    padding: 0 25px;
+    padding: 0 75px;
     border-bottom: 1px solid #ebedf2;
     min-height: 60px;
     border-top-left-radius: 4px;
@@ -15533,7 +15533,7 @@ strong {
       left: 0;
       right: 0; }
     .k-portlet .k-portlet__head.k-portlet__head--lg {
-      min-height: 70px; }
+      min-height: 100px; }
     .k-portlet .k-portlet__head.k-portlet__head--xl {
       min-height: 100px; }
     @media (max-width: 576px) {

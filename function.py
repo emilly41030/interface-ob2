@@ -245,10 +245,10 @@ def read_reversed(classes, paras):
     batch = paras[3]
     subdivisions = paras[4]
     current = paras[5]   
-    cfg_yolo = 'scripts/'+datasetName+"___"+current+'/yolov3_'+datasetName+'.cfg'   
+    cfg_yolo = 'scripts/'+current+'/yolov3_'+datasetName+'.cfg'   
     replace_count=[]
     count=0
-    temp = 'scripts/'+datasetName+"___"+current+'/cfg_temp.cfg'
+    temp = 'scripts/'+current+'/cfg_temp.cfg'
     copyfile('cfg/yolov3-voc.cfg', cfg_yolo)
     with open(cfg_yolo, 'r') as fr:    
         with open(temp, 'w+') as fw:

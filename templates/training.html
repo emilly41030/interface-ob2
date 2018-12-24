@@ -27,8 +27,13 @@
     <body>
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
             <div class="container">
-            <br>            
+            <br>
             <h2>YOLO Parameter</h2>
+                {% if error %}
+                <div class="alert alert-danger">
+                <strong>Error:</strong> {{ error }}
+                </div>
+                {% endif %}
                 <form action="{{ url_for('option') }}" method="post">
                     <div class="form-group" >
                         <div style="display:flex; flex-direction: row; justify-content: center; align-items: center">
@@ -60,9 +65,6 @@
                             <input disabled type="number" class="form-control" id="subdivisions" name="subdivisions" value="{{ paras[4] }}" min=1>
                             <br>
                             </div>
-                        
-                            <input hidden type="label" id=filepath value={{filepath}}>
-
                         </div>
                     </div>
                     <div>
@@ -90,10 +92,7 @@
             </div>
             
             <script type="text/javascript">
-                var a= 0;
-                filepath = document.getElementById('filepath').value;
-                var file1 = 'static/task/'+filepath+'/AvgLoss.json'
-                // console.log(file1)
+                var a= 0;              
                 $(document).ready(function() {
                     $.ajaxSetup({ cache: false });
                 });
@@ -106,7 +105,8 @@
                         url:'{{url_for("training_status_post")}}',
                         dataType:'json',
                         success:function(data){
-                            console.log(data[0]["status"]);
+                            // console.log(data[0]["status"]);
+                            // console.log(data[0]["avg_loss"]);
                             if(data[0]["status"]=="Success"){
                                 $("#finish").show();
                                 $("#process").hide();
@@ -124,37 +124,33 @@
                                 document.getElementById("btn_test").disabled = false;
                                 clearInterval(t2);
                             }
-                        },
-                    });
-
-                    $.ajax({
-                        cache:false,
-                        url:file1,
-                        success: function(){
-                            $.getJSON(file1, function (externaldata) {
-                                console.log(externaldata)
-                                if (is_first==true){
-                                    chart = c3.generate({
-                                    title: {
-                                        text:'External JSON loading via C3.js'
+                            
+                            if(is_first){
+                                chart = c3.generate({
+                                title: {
+                                    text:'External JSON loading via C3.js'
+                                },
+                                bindto: '#mychart',
+                                data: {
+                                    json:{
+                                        'avg_loss': data[0]["avg_loss"]
                                     },
-                                    bindto: '#mychart',
-                                    data: {
-                                        json: externaldata,
-                                        type: 'area-spline',
-                                    }                        
-                                    });
-                                    is_first = false;
+                                    type: 'area-spline',
                                 }
-                                
-                                $.getJSON(file1, function (externaldata) {
-                                    chart.load({ json: externaldata} )
-                                    chart.flush();
-                                });
-                            })
+                            });
+                            is_first=false
+                            }else{
+                                chart.load({ json:{
+                                    'avg_loss': data[0]['avg_loss']}}
+                                )
+                                chart.flush();
+                            }
                         },
                     });
+                    
                 }, 5000);
+
+              
             </script>
           </main>
     </body>

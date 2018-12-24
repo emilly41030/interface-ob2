@@ -28,7 +28,8 @@ migrate = Migrate(app, db)
 
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
-
+avg_loss=[]
+iou = []
 
 class TaskData(db.Model):
     __tablename__ = 'TaskData'
@@ -74,16 +75,7 @@ recordPath = "static/record.txt"
 resultDir = 'static/Result'
 imgPath = "data"
 
-@app.route('/process', methods=['POST'])
-def pid_process():
-    train_task=0
-    if len(config.LIST_PID) != 0:
-        for num in config.LIST_PID:
-            exist_task = function.check_pid(num)
-            if exist_task:
-                train_task+=1
-            return jsonify({'task': train_task})
-    return jsonify({'error':'No training task'})
+
 
 @app.route('/')
 def home():
@@ -183,8 +175,10 @@ def train():
 @app.route('/train_model_post/',methods=['POST','GET']) 
 def train_model_post(): #获取POST数据 
     config.TEST_DATASET=request.form.get('dirname')
-    time2 = config.TEST_DATASET.split('___')[-1]
-    task = TaskData.query.filter_by(RunTime=time2).first()   
+    time2 = config.TEST_DATASET
+    task = TaskData.query.filter_by(RunTime=time2).first()
+    if task is None:
+        return ""
     data = [{
         'TaskName':task.TaskName,
         'Dataset':task.Dataset,
@@ -212,6 +206,13 @@ def test_post(): #获取POST数据
     # print(data)
     return jsonify(data)
 
+@app.route('/trainTask_post/',methods=['POST','GET']) 
+def trainTask_post(): #获取POST数据 
+    task = TaskData.query.filter_by(Status="Training").first()   
+    if task is not None:
+        return "1"
+    return "0"
+
 @app.route('/index')
 def index():    
     return render_template('index.html')
@@ -219,38 +220,63 @@ def index():
 def write_log(datasetName, current, paras, classes, config, datasetPath, backupPath):
     function.add_class('data/voc_'+datasetName+'.names', classes)    
     classes_size=str(len(classes))
-    os.mkdir("scripts/"+datasetName+"___"+current)
+    os.mkdir("scripts/"+current)
     function.file_remove("static/test.txt")
     # 寫 yolov3_voc.cfg 檔案
     function.read_reversed(classes_size, paras)
     #  寫 .data 檔
-    cfg_set = "scripts/"+datasetName+"___"+current+"/voc_"+datasetName+".data"
+    cfg_set = "scripts/"+current+"/voc_"+datasetName+".data"
     copyfile(datasetPath+datasetName+"/voc_"+datasetName+".data", cfg_set)
     config.CFG_DATA=cfg_set
-    backupDir = backupPath+"/"+datasetName+"___"+current
+    backupDir = backupPath+"/"+current
     with open(cfg_set, 'a+') as f:
         f.write("backup = "+backupDir)
-    function.create_dir(backupPath+"/"+datasetName+"___"+current)
-    logPath='scripts/'+datasetName+"___"+current+'/log'
+    function.create_dir(backupPath+"/"+current)
+    logPath='scripts/'+current+'/log'
     function.create_dir(logPath)
     logfile = open(logPath+'/logfile.log', 'w+')
-    cfg_set = os.getcwd()+'/scripts/'+datasetName+"___"+current+'/voc_'+datasetName+".data"
-    cfg_yolo = os.getcwd()+"/scripts/"+datasetName+"___"+current+"/yolov3_"+datasetName+".cfg"
+    cfg_set = os.getcwd()+'/scripts/'+current+'/voc_'+datasetName+".data"
+    cfg_yolo = os.getcwd()+"/scripts/"+current+"/yolov3_"+datasetName+".cfg"
     time.sleep(1)
     print("./darknet detector train "+cfg_set+" "+cfg_yolo+ " "+paras[6])
     p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , paras[6]], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     config.PID = p.pid
     task = TaskData(UserName='ad',TaskName=paras[7],Dataset=paras[0], RunTime=current, MaxBatch=paras[1], BatchSize=paras[3], Subdivisions=paras[4], LearningRate=paras[2], PreModel=paras[8], PID=p.pid, Status="Training", Description="")
     db.session.add(task)
-    db.session.commit()
-    config.LIST_PID.append(p.pid)
-    # print("======== Add pid  "+ str(config.PID)+" ========")
-    # print(config.LIST_PID)
+    db.session.commit()  
     
+    result_dir = 'static/task/'+current
+    function.create_dir(result_dir)
     max_batches = paras[1]
-    for line in p.stdout:
-        sys.stdout.write(line)
-        logfile.write(line)
+    next_skip = False
+    
+    with open(result_dir + '/IOU.json', 'w+') as outfile2:
+        with open(result_dir + '/AvgLoss.json', 'w+') as outfile:
+            for line in p.stdout:
+                sys.stdout.write(line)
+                logfile.write(line)
+                if next_skip:
+                    next_skip = False
+                    continue
+                # 去除多gpu的同步log
+                if 'Syncing' in line:
+                    continue
+                # 去除除零错误的log
+                if 'nan' in line:
+                    continue
+                if 'Saving weights to' in line:
+                    next_skip = True
+                    continue
+                if "images" in line:                           
+                    avg_loss.append(float(line.split(' ')[2]))
+                elif "IOU" in line:
+                    iou.append(float(line.split(' ')[4].split(',')[0]))
+                #print(avg_loss)
+            data = {"avg_loss":avg_loss}
+            json.dump(data, outfile)
+            data = {"IOU":iou}
+            json.dump(data, outfile2)
+
         if 'CUDA Error' in line:           
             task.Status = "Error"
             task.Description = line
@@ -262,7 +288,9 @@ def write_log(datasetName, current, paras, classes, config, datasetPath, backupP
         elif " "+max_batches+' images' in line:
             task.Status = "Success"
             db.session.commit()
-
+            
+    del avg_loss[:]
+    del iou[:]
     print ('write_log finish')
    
     if not task.Status=="Abort":
@@ -274,27 +302,19 @@ def write_log(datasetName, current, paras, classes, config, datasetPath, backupP
     with open("static/test.txt", "w+") as f:
         f.write("")
 
-def extract_log(datasetName, current):
-    time.sleep(10)
-    task = TaskData.query.filter_by(RunTime=current).first()    
-    log_path = 'scripts/'+datasetName+"___"+current+'/log/logfile.log'
-    
-    result_dir = 'static/task/'+datasetName+"___"+current
-    function.create_dir('static/task/')
-    function.create_dir(result_dir)
-    log_size = 1               #紀錄 log 檔案有沒有變化  
-    while (task.Status=="Training"):        
-        if (log_size != os.path.getsize(log_path) and os.path.getsize(log_path) != 0):
-            print("log_size="+str(log_size))
-            log_size = os.path.getsize(log_path)
-            function.write_file(log_path, result_dir)
-        time.sleep(5)
-    function.write_file(log_path, result_dir)
-    print("extract_log finish !!!!!")
+@app.route('/close_task', methods=['GET', 'POST'])
+def close_task():
+    pid=request.form.get('pid')   
+    if pid is not None:
+        function.close_pid(pid)
+        task3 = TaskData.query.filter_by(PID=pid).first()
+        task3.Status = "Abort"
+        db.session.commit()
+    return "0"
 
 @app.route('/training', methods=['GET', 'POST'])
 def training():
-    paras = []    
+    paras=[]
     function.file_remove("static/test.txt")
     if not os.path.isfile('darknet53.conv.74'):
         subprocess.Popen(['wget','https://pjreddie.com/media/files/darknet53.conv.74'])
@@ -314,13 +334,9 @@ def training():
         paras.append(request.form.get('task_name'))
         paras.append(request.form.get('comp2_select'))
         Thread1=threading.Thread(target=write_log, args=(datasetName, current, paras, classes, config, datasetPath, backupPath))
-        Thread1.start()
-        Thread2=threading.Thread(target=extract_log, args=(datasetName, current))
-        Thread2.start()
+        Thread1.start()      
         time.sleep(1)
-        filepath = datasetName+"___"+current
-    # filepath = "Mura_LCD4___20181206_112804"
-    return render_template("training.html", pid=config.PID, paras=paras, filepath=filepath)
+    return render_template("training.html", pid=config.PID, paras=paras, filepath=current)
     
 @app.route("/option", methods=['GET', 'POST'])
 def option():
@@ -355,64 +371,75 @@ def view_training_test_post():
     config.TEST_DATASET=request.form.get('dirname')
     print(config.TEST_DATASET)
     return "0"
-    
+
+@app.route("/view_training_del_post", methods=['GET', 'POST'])
+def view_training_del_post():
+    del_dir = request.get_json()
+    for dirname in del_dir:     # 存放 weight
+        # print(del_dir)
+        shutil.rmtree(backupPath+'/'+dirname, ignore_errors=True)
+        # 存放 log .data .cfg
+        if not dirname=='backup':
+            shutil.rmtree('scripts/'+dirname, ignore_errors=True)
+        # 存放 log .data .cfg            
+        shutil.rmtree('static/task/'+dirname, ignore_errors=True)
+        time = dirname
+        # print(time)
+        del_task = TaskData.query.filter_by(RunTime=time).first()
+        db.session.delete(del_task)
+        db.session.commit()
+    return "0"
+
+
 @app.route("/view_training", methods=['GET', 'POST'])
 def view_training():
-    backupDir=[]
+    backupDir_data=[]
     error=None
     backupfiles = listdir(backupPath)
     for f in backupfiles:
-        backupDir.append(f)
-    if len(backupDir)==0:
+        task = TaskData.query.filter_by(RunTime=str(f)).first()
+        if task is not None:
+            backupDir_data.append(task)
+    if len(backupDir_data)==0:
         error = "Cannot find any backup"
         return render_template('view_training.html',error=error)
-    config.TEST_DATASET = backupDir[0]
+    # config.TEST_DATASET = backupDir_data[0]
 
-    if request.method == "POST":
-        if 'delBtn' in request.form:
-            del_dir = request.form.getlist('comp0_select')
-            
-            for dirname in del_dir:     # 存放 weight
-                # print(del_dir)
-                shutil.rmtree(backupPath+'/'+dirname, ignore_errors=True)
-                # 存放 log .data .cfg
-                if not dirname=='backup':
-                    shutil.rmtree('scripts/'+dirname, ignore_errors=True)
-                # 存放 log .data .cfg            
-                shutil.rmtree('static/task/'+dirname, ignore_errors=True)
-                backupDir.remove(dirname)
-                time = dirname.split("___")[-1]
-                # print(time)
-                del_task = TaskData.query.filter_by(RunTime=time).first()
-                db.session.delete(del_task)
-                db.session.commit()
+    return render_template('view_training.html',size_d=2,tree=backupDir_data, error=error, dataset=config.TEST_DATASET)
 
-        elif 'cancelBtn' in request.form:
-            config.TEST_DATASET = request.form.get('comp0_select')
-
-    return render_template('view_training.html',size_d=2,tree=backupDir, error=error, dataset=config.TEST_DATASET)
+@app.route("/showimg_del_post", methods=['GET', 'POST'])
+def showimg_del_post():
+    print("!!!")
+    shutil.rmtree(resultDir, ignore_errors=True)
+    function.create_dir(resultDir)
+    error=None
+    error = " Cannot find any backup"        
+    return render_template('test.html',error=error)
+    # return "0"
 
 @app.route("/showimg", methods=['GET', 'POST'])
 def showimg():
     image_names = os.listdir(resultDir)
-    if request.method == "POST":
-        shutil.rmtree(resultDir, ignore_errors=True)
-        del image_names
-        image_names=[]
+    # if request.method == "POST":
+    #     shutil.rmtree(resultDir, ignore_errors=True)
+    #     del image_names
+    #     image_names=[]
+    # function.create_dir(resultDir)
     return render_template("showimg.html", image_names=image_names)
 
 @app.route("/test_start_post/", methods=['GET', 'POST'])
 def test_start_post():
-    model = request.form.get('model')
+    print("!!!!!!!!!!!!")
+    dirname = request.form.get('model')
     wei_file = request.form.get('weight')
     img = request.form.get('img')
     function.file_remove('predictions.jpg')
-    function.create_dir(resultDir)   
-    dataset = model
-    name = model.split("___")
-                        
-    print("./darknet detector test scripts/"+dataset+"/voc_"+name[0]+".data scripts/"+dataset+"/yolov3_"+name[0]+".cfg scripts/backup/"+dataset+"/"+str(wei_file)+ ' data/'+str(img))
-    p = subprocess.Popen(["./darknet", "detector","test","scripts/"+dataset+"/voc_"+name[0]+".data", "scripts/"+dataset+"/yolov3_"+name[0]+".cfg","scripts/backup/"+dataset+"/"+str(wei_file), 'data/'+str(img)])
+    function.create_dir(resultDir)
+        
+    task = TaskData.query.filter_by(RunTime=dirname).first()
+    name = task.Dataset
+    print("./darknet detector test scripts/"+dirname+"/voc_"+name+".data scripts/"+dirname+"/yolov3_"+name+".cfg scripts/backup/"+dirname+"/"+str(wei_file)+ ' data/'+str(img))
+    p = subprocess.Popen(["./darknet", "detector","test","scripts/"+dirname+"/voc_"+name+".data", "scripts/"+dirname+"/yolov3_"+name+".cfg","scripts/backup/"+dirname+"/"+str(wei_file), 'data/'+str(img)])
     p.wait()
     img_name = str(wei_file)+'-'+str(img).split('.')[0]+'.jpg'
     shutil.move('predictions.jpg', resultDir+"/"+img_name)
@@ -421,15 +448,18 @@ def test_start_post():
 @app.route("/training_status_post/", methods=['GET', 'POST'])
 def training_status_post():
     task = TaskData.query.filter_by(PID=config.PID).first()
+    #print(avg_loss)
     data = [{      
         'status':task.Status,
-        'Description':task.Description
+        'Description':task.Description,
+        "avg_loss":avg_loss
     }]
     return jsonify(data)
 
 @app.route("/test", methods=['GET', 'POST'])
 def test():
     ###   匯入 backup file ###
+    function.create_dir(resultDir)
     backupDir = []
     size_d = 0
     backupfiles = listdir(backupPath)
@@ -445,15 +475,14 @@ def test():
     else:
         size_d=len(backupDir)
 
-    ###   匯入 backup file 的 weights ###
-    name = backupDir[0].split("___")
+    ###   匯入 backup file 的 weights ###   
     dirfiles=[]
     childtree = []
     # config.DATASET_NAME=backupDir[0]
-    if config.TEST_DATASET =="":
-        config.DATASET_NAME=name[0]
-        config.TIME=name[-1]        
-        dirfiles = listdir(backupPath+"/"+str(config.DATASET_NAME)+"___"+str(config.TIME))
+    if config.TEST_DATASET =="" or config.TEST_DATASET is None:
+        config.DATASET_NAME=backupDir[0]
+        config.TIME=backupDir[0]
+        dirfiles = listdir(backupPath+"/"+str(config.TIME))
     else:
         dirfiles = listdir(backupPath+"/"+config.TEST_DATASET)
     for f in dirfiles:
