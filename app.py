@@ -180,6 +180,7 @@ def train_model_post(): #获取POST数据
     if task is None:
         return ""
     data = [{
+        'ID':task.Id,
         'TaskName':task.TaskName,
         'Dataset':task.Dataset,
         'RunTime':task.RunTime,
@@ -189,6 +190,7 @@ def train_model_post(): #获取POST数据
         'LearningRate':task.LearningRate,
         'status':task.Status
     }]
+    print(task.Id)
     return jsonify(data)
 
 @app.route('/test_post/',methods=['POST','GET']) 
@@ -408,8 +410,7 @@ def view_training():
     return render_template('view_training.html',size_d=2,tree=backupDir_data, error=error, dataset=config.TEST_DATASET)
 
 @app.route("/showimg_del_post", methods=['GET', 'POST'])
-def showimg_del_post():
-    print("!!!")
+def showimg_del_post():    
     shutil.rmtree(resultDir, ignore_errors=True)
     function.create_dir(resultDir)
     error=None
@@ -419,12 +420,7 @@ def showimg_del_post():
 
 @app.route("/showimg", methods=['GET', 'POST'])
 def showimg():
-    image_names = os.listdir(resultDir)
-    # if request.method == "POST":
-    #     shutil.rmtree(resultDir, ignore_errors=True)
-    #     del image_names
-    #     image_names=[]
-    # function.create_dir(resultDir)
+    image_names = os.listdir(resultDir)   
     return render_template("showimg.html", image_names=image_names)
 
 @app.route("/test_start_post/", methods=['GET', 'POST'])
@@ -452,7 +448,8 @@ def training_status_post():
     data = [{      
         'status':task.Status,
         'Description':task.Description,
-        "avg_loss":avg_loss
+        "avg_loss":avg_loss,
+        'ID':task.Id
     }]
     return jsonify(data)
 
@@ -495,27 +492,28 @@ def test():
     for f in imgfiles:
         if os.path.splitext(f)[-1] in [".png", ".jpg"]:
             imglist.append(f)
-
+    if request.method == "POST": 
+        backupfiles = os.listdir(backupPath)
+        for dirname in backupfiles:     # 存放 weight
+            # print(dirname)
+            shutil.rmtree(backupPath+'/'+dirname, ignore_errors=True)
+        file = os.listdir('scripts')  # 存放 log .data .cfg
+        for dirname in file:
+            if not dirname=='backup':
+                shutil.rmtree('scripts/'+dirname, ignore_errors=True)      
+        file = os.listdir('static/task')  # 存放 log .data .cfg
+        for dirname in file:
+            shutil.rmtree('static/task/'+dirname, ignore_errors=True)
+        
+        error = " Cannot find any backup"
+        TaskData.query.delete()
+        db.session.commit()
+        return render_template('test.html',error=error)
+        
     return render_template('test.html',size_d=size_d, dataset=config.TEST_DATASET,tree=backupDir, childtree=childtree, imglist=imglist, result="")
 
-@app.route("/del_all_post/", methods=['GET', 'POST'])
-def del_all_post():
-    backupfiles = os.listdir(backupPath)
-    for dirname in backupfiles:     # 存放 weight
-        # print(dirname)
-        shutil.rmtree(backupPath+'/'+dirname, ignore_errors=True)
-    file = os.listdir('scripts')  # 存放 log .data .cfg
-    for dirname in file:
-        if not dirname=='backup':
-            shutil.rmtree('scripts/'+dirname, ignore_errors=True)      
-    file = os.listdir('static/task')  # 存放 log .data .cfg
-    for dirname in file:
-        shutil.rmtree('static/task/'+dirname, ignore_errors=True)
-    
-    error = " Cannot find any backup"
-    TaskData.query.delete()
-    db.session.commit()
-    return render_template('test.html',error=error)
+# @app.route("/del_all_post/", methods=['GET', 'POST'])
+
 
 if __name__ == "__main__":
     app.secret_key = os.urandom(12)

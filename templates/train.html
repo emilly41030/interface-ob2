@@ -4,8 +4,8 @@
        <title>Deep Learning</title>
        <link rel="stylesheet" href="static/bootstrap.min.css">
        <link rel="stylesheet" href="static/bootstrap-theme.min.css">
-       <meta name="viewport" content = "width=device-width, initial-scale=1.0"> 
-     
+       <meta name="viewport" content = "width=device-width, initial-scale=1.0">
+       <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     </head>
     <style>
         input[type=number]{
@@ -67,7 +67,38 @@
                 </form>
                 <br>        
                 </div>
-            
+                <script>
+                var is_training = true;
+                $( document ).ready(function() {
+                    check_train();
+                    var t1 = window.setInterval(()=>{
+                        is_training = check_train();
+                        if(is_training==false){
+                            clearInterval(t1);
+                        }                    
+                    }, 1000);
+                    $('li a.active').removeClass('active');
+                    $('a[href="' + location.pathname + '"]').closest('li a').addClass('active'); 
+                });
+
+                function check_train(){               
+                    $.ajax({
+                        type:'POST',
+                        url:'{{url_for("trainTask_post")}}',
+                        success:function(data){
+                            if(data=="0"){
+                                $('#train_nav').hide();
+                                is_training = false;
+                            }
+                            else if(data=="1"){
+                                $('#train_nav').show();
+                                is_training = true;
+                            }
+                        },
+                    });
+                    return is_training
+                }
+                </script>
         </main>
     </body>
 </html>
