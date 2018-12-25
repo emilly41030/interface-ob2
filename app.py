@@ -43,8 +43,8 @@ class TaskData(db.Model):
     Subdivisions = db.Column(db.Integer)
     LearningRate = db.Column(db.Integer)
     PreModel = db.Column(db.String(64))
-    PID = db.Column(db.Integer)    
-    Status = db.Column(db.String(64))    
+    PID = db.Column(db.Integer)
+    Status = db.Column(db.String(64))
     Description = db.Column(db.String(64))
 
     def __init__(self, UserName, TaskName, Dataset, RunTime, MaxBatch, BatchSize, Subdivisions, LearningRate, PreModel, PID, Status, Description):      
@@ -61,6 +61,20 @@ class TaskData(db.Model):
         self.Status=Status      
         self.Description = Description
 
+class Dataset_info(db.Model):
+    __tablename__ = 'Dataset_info'
+    Id = db.Column(db.Integer, primary_key=True)    
+    Name = db.Column(db.String(64))
+    Class = db.Column(db.String(64))
+    Task = db.Column(db.String(64))
+    
+
+    def __init__(self, Name, Class, Task):
+        self.Name = Name
+        self.Class = Class
+        self.Task = Task
+      
+
 app.config.from_object(config)
 classes = []   #類別資訊
 classNamePath = config.CLASSPATH  #類別名稱
@@ -70,9 +84,10 @@ cfg_set=config.CFG_DATA
 cfg_yolo=config.CFG_YOLO
 # app.config["SIJAX_STATIC_PATH"] = os.path.join('.', os.path.dirname(__file__), 'static/js/sijax/')
 datasetPath = 'dataset/'
-backupPath = 'scripts/backup'
+backupPath = 'static/backup'
 recordPath = "static/record.txt"
 resultDir = 'static/Result'
+taskDir = 'static/task'
 imgPath = "data"
 
 
@@ -140,7 +155,7 @@ def ImportDataset():
         function.create_listName(ImagesPath)
         print("Creat_listName finish")
         
-        # voc_label_Mura.py  創建 訓練、驗證完整的路徑檔案 scripts/xxx_train.txt、xxx_val.txt，
+        # voc_label_Mura.py  創建 訓練、驗證完整的路徑檔案 static/task/xxx_train.txt、xxx_val.txt，
         #                    產生 label 資料夾      
         function.voc_label(ImagesPath, datasetName, classes)
         #  寫 .data 檔
@@ -222,23 +237,24 @@ def index():
 def write_log(datasetName, current, paras, classes, config, datasetPath, backupPath):
     function.add_class('data/voc_'+datasetName+'.names', classes)    
     classes_size=str(len(classes))
-    os.mkdir("scripts/"+current)
+    os.mkdir(taskDir)
+    os.mkdir(taskDir+'/'+current)
     function.file_remove("static/test.txt")
     # 寫 yolov3_voc.cfg 檔案
     function.read_reversed(classes_size, paras)
     #  寫 .data 檔
-    cfg_set = "scripts/"+current+"/voc_"+datasetName+".data"
+    cfg_set = taskDir+'/'+current+"/voc_"+datasetName+".data"
     copyfile(datasetPath+datasetName+"/voc_"+datasetName+".data", cfg_set)
     config.CFG_DATA=cfg_set
     backupDir = backupPath+"/"+current
     with open(cfg_set, 'a+') as f:
         f.write("backup = "+backupDir)
     function.create_dir(backupPath+"/"+current)
-    logPath='scripts/'+current+'/log'
+    logPath=taskDir+'/'+current+'/log'
     function.create_dir(logPath)
     logfile = open(logPath+'/logfile.log', 'w+')
-    cfg_set = os.getcwd()+'/scripts/'+current+'/voc_'+datasetName+".data"
-    cfg_yolo = os.getcwd()+"/scripts/"+current+"/yolov3_"+datasetName+".cfg"
+    cfg_set = os.getcwd()+'/'+taskDir+'/'+current+'/voc_'+datasetName+".data"
+    cfg_yolo = os.getcwd()+'/'+taskDir+'/'+current+"/yolov3_"+datasetName+".cfg"
     time.sleep(1)
     print("./darknet detector train "+cfg_set+" "+cfg_yolo+ " "+paras[6])
     p = subprocess.Popen(['./darknet', 'detector', 'train', cfg_set,cfg_yolo , paras[6]], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -247,50 +263,58 @@ def write_log(datasetName, current, paras, classes, config, datasetPath, backupP
     db.session.add(task)
     db.session.commit()  
     
-    result_dir = 'static/task/'+current
+    result_dir = taskDir+'/'+current
     function.create_dir(result_dir)
     max_batches = paras[1]
     next_skip = False
     
-    with open(result_dir + '/IOU.json', 'w+') as outfile2:
-        with open(result_dir + '/AvgLoss.json', 'w+') as outfile:
-            for line in p.stdout:
-                sys.stdout.write(line)
-                logfile.write(line)
-                if next_skip:
-                    next_skip = False
-                    continue
-                # 去除多gpu的同步log
-                if 'Syncing' in line:
-                    continue
-                # 去除除零错误的log
-                if 'nan' in line:
-                    continue
-                if 'Saving weights to' in line:
-                    next_skip = True
-                    continue
-                if "images" in line:                           
-                    avg_loss.append(float(line.split(' ')[2]))
-                elif "IOU" in line:
-                    iou.append(float(line.split(' ')[4].split(',')[0]))
-                #print(avg_loss)
-            data = {"avg_loss":avg_loss}
-            json.dump(data, outfile)
-            data = {"IOU":iou}
-            json.dump(data, outfile2)
+    try:
+        with open(result_dir + '/IOU.json', 'w+') as outfile2:
+            with open(result_dir + '/AvgLoss.json', 'w+') as outfile:
+                for line in p.stdout:
+                    sys.stdout.write(line)
+                    logfile.write(line)
+                    if next_skip:
+                        next_skip = False
+                        continue
+                    # 去除多gpu的同步log
+                    if 'Syncing' in line:
+                        continue
+                    # 去除除零错误的log
+                    if 'nan' in line:
+                        continue
+                    if 'Saving weights to' in line:
+                        next_skip = True
+                        continue
+                    if "images" in line:                           
+                        avg_loss.append(float(line.split(' ')[2]))
+                    elif "IOU" in line:
+                        iou.append(float(line.split(' ')[4].split(',')[0]))
+                    #print(avg_loss)
+                data = {"avg_loss":avg_loss}
+                json.dump(data, outfile)
+                data = {"IOU":iou}
+                json.dump(data, outfile2)
 
-        if 'CUDA Error' in line:           
-            task.Status = "Error"
-            task.Description = line
-            db.session.commit()          
-        elif 'Cannot load image' in line:            
-            task.Status = "Error"
-            task.Description = line
-            db.session.commit()          
-        elif " "+max_batches+' images' in line:
-            task.Status = "Success"
-            db.session.commit()
-            
+            if 'CUDA Error' in line:           
+                task.Status = "Error"
+                task.Description = line
+                db.session.commit()          
+            elif 'Cannot load image' in line:            
+                task.Status = "Error"
+                task.Description = line
+                db.session.commit()          
+            elif " "+max_batches+' images' in line:
+                task.Status = "Success"
+                db.session.commit()
+    
+    except IOError as err:
+        print("I/O error: {0}".format(err))
+    except ValueError:
+        print("Could not convert data to an integer.")
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+   
     del avg_loss[:]
     del iou[:]
     print ('write_log finish')
@@ -306,12 +330,13 @@ def write_log(datasetName, current, paras, classes, config, datasetPath, backupP
 
 @app.route('/close_task', methods=['GET', 'POST'])
 def close_task():
-    pid=request.form.get('pid')   
+    pid=request.form.get('pid')
     if pid is not None:
-        function.close_pid(pid)
         task3 = TaskData.query.filter_by(PID=pid).first()
         task3.Status = "Abort"
         db.session.commit()
+        if (function.check_pid(int(pid))):
+            function.close_pid(int(pid))
     return "0"
 
 @app.route('/training', methods=['GET', 'POST'])
@@ -361,10 +386,10 @@ def option():
         if request.form["btn"] == "Close":
             if (function.check_pid(config.PID)):
                 function.close_pid(config.PID)
-                # print("======== Del pid"+ str(config.PID)+" ========")
-                task3 = TaskData.query.filter_by(PID=config.PID).first()
-                task3.Status = "Abort"
-                db.session.commit()
+            # print("======== Del pid"+ str(config.PID)+" ========")
+            task3 = TaskData.query.filter_by(PID=config.PID).first()
+            task3.Status = "Abort"
+            db.session.commit()
                         
     return render_template("train.html", pid=config.PID, dirList=datasetList,  backup=backupFileList)
     
@@ -382,9 +407,9 @@ def view_training_del_post():
         shutil.rmtree(backupPath+'/'+dirname, ignore_errors=True)
         # 存放 log .data .cfg
         if not dirname=='backup':
-            shutil.rmtree('scripts/'+dirname, ignore_errors=True)
+            shutil.rmtree(taskDir+'/'+dirname, ignore_errors=True)
         # 存放 log .data .cfg            
-        shutil.rmtree('static/task/'+dirname, ignore_errors=True)
+        shutil.rmtree(taskDir+'/'+dirname, ignore_errors=True)
         time = dirname
         # print(time)
         del_task = TaskData.query.filter_by(RunTime=time).first()
@@ -425,7 +450,6 @@ def showimg():
 
 @app.route("/test_start_post/", methods=['GET', 'POST'])
 def test_start_post():
-    print("!!!!!!!!!!!!")
     dirname = request.form.get('model')
     wei_file = request.form.get('weight')
     img = request.form.get('img')
@@ -434,8 +458,8 @@ def test_start_post():
         
     task = TaskData.query.filter_by(RunTime=dirname).first()
     name = task.Dataset
-    print("./darknet detector test scripts/"+dirname+"/voc_"+name+".data scripts/"+dirname+"/yolov3_"+name+".cfg scripts/backup/"+dirname+"/"+str(wei_file)+ ' data/'+str(img))
-    p = subprocess.Popen(["./darknet", "detector","test","scripts/"+dirname+"/voc_"+name+".data", "scripts/"+dirname+"/yolov3_"+name+".cfg","scripts/backup/"+dirname+"/"+str(wei_file), 'data/'+str(img)])
+    print("./darknet detector test "+taskDir+"/"+dirname+"/voc_"+name+".data "+taskDir+"/"+dirname+"/yolov3_"+name+".cfg "+taskDir+"/"+"backup/"+dirname+"/"+str(wei_file)+ ' data/'+str(img))
+    p = subprocess.Popen(["./darknet", "detector","test",taskDir+'/'+dirname+"/voc_"+name+".data", taskDir+'/'+dirname+"/yolov3_"+name+".cfg",taskDir+"/backup/"+dirname+"/"+str(wei_file), 'data/'+str(img)])
     p.wait()
     img_name = str(wei_file)+'-'+str(img).split('.')[0]+'.jpg'
     shutil.move('predictions.jpg', resultDir+"/"+img_name)
@@ -497,19 +521,18 @@ def test():
         for dirname in backupfiles:     # 存放 weight
             # print(dirname)
             shutil.rmtree(backupPath+'/'+dirname, ignore_errors=True)
-        file = os.listdir('scripts')  # 存放 log .data .cfg
+        file = os.listdir(taskDir)  # 存放 log .data .cfg
         for dirname in file:
             if not dirname=='backup':
-                shutil.rmtree('scripts/'+dirname, ignore_errors=True)      
-        file = os.listdir('static/task')  # 存放 log .data .cfg
+                shutil.rmtree(taskDir+'/'+dirname, ignore_errors=True)
         for dirname in file:
-            shutil.rmtree('static/task/'+dirname, ignore_errors=True)
+            shutil.rmtree(taskDir+'/'+dirname, ignore_errors=True)
         
         error = " Cannot find any backup"
         TaskData.query.delete()
         db.session.commit()
-        return render_template('test.html',error=error)
-        
+        return render_template('test.html',error=error, imglist=imglist)
+
     return render_template('test.html',size_d=size_d, dataset=config.TEST_DATASET,tree=backupDir, childtree=childtree, imglist=imglist, result="")
 
 # @app.route("/del_all_post/", methods=['GET', 'POST'])

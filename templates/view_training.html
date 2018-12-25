@@ -81,7 +81,7 @@
                         <div class="k-portlet__body">
                             <!--begin::Portlet-->                                    
                             <div class="k-datatable k-datatable--default k-datatable--brand k-datatable--loaded k-datatable--scroll" id="k_recent_orders">
-                                <table class="k-datatable__table" style="display: block; min-height: 100px; max-height: 430px; ">
+                                <table id="aaaaaa" class="k-datatable__table" style="display: block; min-height: 100px; max-height: 430px; ">
                                     <thead class="k-datatable__head">
                                         <tr class="k-datatable__row" style="left: 5px;">
                                             <th style="visibility:hidden; width: 20px" class="k-datatable__cell--center k-datatable__cell k-datatable__cell--check">
@@ -172,6 +172,12 @@
                                             </td>
                                         </tr>
                                         {%- endfor %}
+                                        <!-- <div class="ps__rail-x" style="left: 0px; bottom: 0px;">
+                                            <div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div>
+                                        </div>
+                                        <div class="ps__rail-y" style="top: 60px; height: 376px; right: 0px;">
+                                            <div class="ps__thumb-y" tabindex="0" style="top: 44px; height: 281px;"></div>
+                                        </div> -->
                                     </tbody>
                                 </table>
                                   <div class="k-datatable__pager k-datatable--paging-loaded clearfix">
@@ -226,8 +232,7 @@
             }
         </style>
         <script>
-            function test_port(id)
-            {
+            function test_port(id){
                 dirname=document.getElementById(id).value
                 var data = {
                     'dirname': dirname
@@ -313,7 +318,13 @@
                     }
                 });
                 $('li a.active').removeClass('active');
-                $('a[href="' + location.pathname + '"]').closest('li a').addClass('active'); 
+                $('a[href="' + location.pathname + '"]').closest('li a').addClass('active');
+
+                $('#aaaaaa').DataTable({
+                        "scrollY":        "200px",
+                        "scrollCollapse": true,
+                        "paging":         false
+                });
             });
             
             function post_function(dirname)
@@ -332,7 +343,7 @@
                     url:'{{url_for("train_model_post")}}',
                     data:data,
                     dataType:'json',
-                    success:function(data){                       
+                    success:function(data){                     
                         $('#taskname span').text(data[0]["TaskName"]);
                         $('#maxbatch span').text(data[0]["MaxBatch"]);
                         $('#batchsize span').text(data[0]["BatchSize"]);

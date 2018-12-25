@@ -27,6 +27,8 @@
                         clearInterval(t1);
                     }                    
                 }, 1000);
+
+                //nav上色
                 $('li a.active').removeClass('active');
                 $('a[href="' + location.pathname + '"]').closest('li a').addClass('active'); 
             });
@@ -56,7 +58,7 @@
            
             <div class="container"> 
             <h2>Dataset</h2>
-            <form method="post">        
+            <form method="post">
                 <label>Image path: </label>
                 <input type="text" class="form-control" id="train_dataset" name="train_imagePath" value="/home/kelly/data/Dataset/Mura/LCD4/label_jpg">
                 <br>
@@ -65,18 +67,27 @@
     <!--        <input type="file" webkitdirectory directory multiple/> -->
                 <br>
                 <label>class names: </label>
-                <button type="button" class="btn btn-info" onclick="myFunction2()">Other</button>
-                <button type="button" class="btn btn-info" onclick="myFunction()">VOC</button>
                 <br>
+                <div>
+                    <button type="button" class="btn btn-info" onclick="myFunction2()">Other</button>
+                    <button type="button" class="btn btn-info" onclick="myFunction()">VOC</button>
+                </div>                
                 <br>
                 <textarea cols='10' rows='4' name="classes" id="ta" onchange="change()">shock&#13;&#10;defect</textarea>
+                <br>
                 <br>
                 <label>Dataset name: </label>
                 <input type="text" class="form-control" id="dataset_name" name="dataset_name" value="Mura_LCD4">
                 <br>
                 <button type="submit" class="btn btn-primary" id="bt" name="btn_dataset" >Start</button>
-                <br>
-            </form>   
+                
+            </form>
+            <style>
+            textarea{
+                width: 50%;
+                height: 50%;
+            }
+            </style>
             </div>
         </main>
     </body>

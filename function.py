@@ -101,9 +101,8 @@ def read_record(recordPath, config):
                 elif "classNamePath" in lines:
                     config.CLASSPATH = lines.split(":")[-1].strip()
 
-def close_pid(pid):    
+def close_pid(pid):
     os.kill(int(pid), signal.SIGKILL)
-    print("kill "+str(pid)+"!!!!!")    
 
 def get_pid(name):
     return subprocess.check_output(["pidof",name])
@@ -245,10 +244,10 @@ def read_reversed(classes, paras):
     batch = paras[3]
     subdivisions = paras[4]
     current = paras[5]   
-    cfg_yolo = 'scripts/'+current+'/yolov3_'+datasetName+'.cfg'   
+    cfg_yolo = 'static/task/'+current+'/yolov3_'+datasetName+'.cfg'   
     replace_count=[]
     count=0
-    temp = 'scripts/'+current+'/cfg_temp.cfg'
+    temp = 'static/task/'+current+'/cfg_temp.cfg'
     copyfile('cfg/yolov3-voc.cfg', cfg_yolo)
     with open(cfg_yolo, 'r') as fr:    
         with open(temp, 'w+') as fw:

@@ -169,8 +169,11 @@
                             clearInterval(t1);
                         }                    
                     }, 1000);
+
+                    // nav選單顏色更換
                     $('li a.active').removeClass('active');
-                    $('a[href="' + location.pathname + '"]').closest('li a').addClass('active'); 
+                    $('a[href="' + location.pathname + '"]').closest('li a').addClass('active');
+
                 });
 
                 function check_train(){               
@@ -201,25 +204,7 @@
                             }
                         });
                     }
-                }
-                
-                function check_training(){
-                    $.ajax({
-                        type:'POST',
-                        url:'{{url_for("trainTask_post")}}',
-                        success:function(data){
-                            if(data=="0"){
-                                $('#train_nav').hide();
-                                return false;
-                            }                            
-                            else if(data=="1"){
-                                $('#train_nav').show();
-                                return true;
-                            }
-                        },
-                    });
-                }
-                
+                }                
             </script>
         </main>
     </body>
