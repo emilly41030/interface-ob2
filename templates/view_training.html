@@ -72,8 +72,8 @@
                                     <!-- <input type="submit" class="btn btn-danger btn btn-brand btn-upper btn-bold" id="delBtn" value="Delete" name="delBtn" onclick="del_port()"> -->
                                     <input type="button" style="display:none" class="btn btn-danger btn btn-brand btn-upper btn-bold" id="delBtn" value="Del" name="delBtn" onclick="del_port()">
                                     <div class="k-form__group k-form__group--inline k-margin-r-10"></div>
-                                    <input type="button" style="display:none" class="btn btn-success btn btn-brand btn-upper btn-bold" id="cancelBtn" value="Cancel" name="cancelBtn" onclick="cancel()">
-                                    <input type="button" class="btn btn-success btn btn-brand btn-upper btn-bold" id="edit" value="Edit" name="btn" onclick="create_delBtn()">
+                                        <input type="button" style="display:none" class="btn btn-success btn btn-brand btn-upper btn-bold" id="cancelBtn" value="Cancel" name="cancelBtn" onclick="cancel()">
+                                        <input type="button" class="btn btn-success btn btn-brand btn-upper btn-bold" id="edit" value="Edit" name="btn" onclick="create_delBtn()">
                                 </div>
                             </div>
                         </div>
@@ -123,50 +123,50 @@
                                             <td style="visibility:hidden; width: 20px;" class="k-datatable__cell--center k-datatable__cell k-datatable__cell--check">
                                                
                                                     <label class="k-checkbox k-checkbox--single k-checkbox--solid k-checkbox--brand">
-                                                        <input id="{{ item.Id }}" type="checkbox" value="{{ item.RunTime }}">&nbsp;
+                                                        <input id="{{ item.ID }}" type="checkbox" value="{{ item.RunTime }}">&nbsp;
                                                 <span></span>
-                                                </label>                                               
+                                                </label>
                                             </td>
                                             
-                                            <td style="width: 360px;" class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.Id }})">                                               
-                                                <span  class="k-label-font-color-3 k-font-bold">{{ item.TaskName }}</span>                                              
+                                            <td style="width: 360px;" class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.ID }})">
+                                                <span class="k-label-font-color-3 k-font-bold">{{ item.TaskName }}</span>
                                             </td>
-                                            <td style="width: 185px;" class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.Id }})">                                                 
-                                                    <span  class="k-label-font-color-3 k-font-bold">{{ item.RunTime }}</span>                                                    
-                                                </td>
-                                            <td style="width: 160px;" class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.Id }})">                                              
-                                                <span class="k-label-font-color-3 k-font-bold">{{ item.MaxBatch }}</span>                                              
+                                            <td style="width: 185px;" class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.ID }})">
+                                                <span class="k-label-font-color-3 k-font-bold">{{ item.RunTime }}</span>
                                             </td>
-                                            <td style="width: 100px;" class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.Id }})">
+                                            <td style="width: 160px;" class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.ID }})">
+                                                <span class="k-label-font-color-3 k-font-bold">{{ item.MaxBatch }}</span>
+                                            </td>
+                                            <td style="width: 100px;" class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.ID }})">
                                                 <span >{{ item.BatchSize }}</span>
                                             </td>
-                                            <td style="width: 140px;" class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.Id }})">                                                                                             
+                                            <td style="width: 140px;" class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.ID }})">                                                                                             
                                                 <span class="k-label-font-color-3 k-font-bold">{{ item.Subdivisions }}</span>                                              
                                             </td>
-                                            <td style="width: 200px;" class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.Id }})">                                                
+                                            <td style="width: 200px;" class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.ID }})">                                                
                                                 <span class="k-label-font-color-3 k-font-bold">{{ item.LearningRate }}</span>                                               
                                             </td>
-                                            <td class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.Id }})">
+                                            <td class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.ID }})">
                                                 <span style="width: 100px;">
                                                     {% if item.Status == "Abort" %}
-                                                    <span id="span_c{{item.Id}}" class="k-badge k-badge--focus k-badge--dot k-badge--md"></span>
+                                                    <span id="span_c{{item.ID}}" class="k-badge k-badge--focus k-badge--dot k-badge--md"></span>
                                                     {% elif item.Status == "Error" %}
-                                                    <span id="span_c{{item.Id}}" class="k-badge k-badge--danger k-badge--dot k-badge--md"></span>
+                                                    <span id="span_c{{item.ID}}" class="k-badge k-badge--danger k-badge--dot k-badge--md"></span>
                                                     {% elif item.Status == "Success" %}
-                                                    <span id="span_c{{item.Id}}" class="k-badge k-badge--success k-badge--dot k-badge--md"></span>
+                                                    <span id="span_c{{item.ID}}" class="k-badge k-badge--success k-badge--dot k-badge--md"></span>
                                                     {% else %}
-                                                    <span id="span_c{{item.Id}}" class="k-badge k-badge--brand k-badge--dot k-badge--md"></span>
+                                                    <span id="span_c{{item.ID}}" class="k-badge k-badge--brand k-badge--dot k-badge--md"></span>
                                                     {%- endif %}
-                                                    <span id="span{{item.Id}}" class="k-label-font-color-3 k-font-bold">{{ item.Status }}</span>
+                                                    <span id="span{{item.ID}}" class="k-label-font-color-3 k-font-bold">{{ item.Status }}</span>
                                                 </span>
                                             </td>
-                                            <td class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.Id }})">
+                                            <td class="k-datatable__cell k-datatable__cell--sort" onclick="select_click({{ item.ID }})">
                                                 <span style="width: 180px;">
                                                     <div style="display: inline">
                                                         {% if item.Status == "Training" %}
                                                         <input type="button" class ="la la-edit" value="Close" id="close_btn" onclick="close_task({{ item.PID }})">
                                                         {%- endif %}
-                                                        <input type="button" class ="la la-edit" value="test" onclick="test_port({{ item.Id }})">
+                                                        <input type="button" class ="la la-edit" value="test" onclick="test_port({{ item.ID }})">
                                                     </div>
                                                 </span>
                                             </td>
@@ -180,7 +180,7 @@
                                         </div> -->
                                     </tbody>
                                 </table>
-                                  <div class="k-datatable__pager k-datatable--paging-loaded clearfix">
+                                  <!-- <div class="k-datatable__pager k-datatable--paging-loaded clearfix">
                                     <ul class="k-datatable__pager-nav">
                                         <li>
                                             <a title="First" class="k-datatable__pager-link k-datatable__pager-link--first k-datatable__pager-link--disabled" data-page="1" disabled="disabled">
@@ -211,7 +211,7 @@
                                         </li>
                                     </ul>
                                  
-                                </div>
+                                </div> -->
                             </div>                              
                         </div>
                     </div>
@@ -320,21 +320,15 @@
                 $('li a.active').removeClass('active');
                 $('a[href="' + location.pathname + '"]').closest('li a').addClass('active');
 
-                $('#aaaaaa').DataTable({
-                        "scrollY":        "200px",
-                        "scrollCollapse": true,
-                        "paging":         false
-                });
+                // $('#aaaaaa').DataTable({
+                //         "scrollY":        "200px",
+                //         "scrollCollapse": true,
+                //         "paging":         false
+                // });
             });
             
             function post_function(dirname)
             {
-                {% for item in tree%}
-                    {% if item.Status == "Training" %}
-                        $('#train_nav').show();
-                    {%endif%}
-                {%endfor%}
-
                 var data = {
                     'dirname':dirname,
                 }
@@ -396,9 +390,9 @@
             function cal_checkbox_select(select_ID, select_name, select_PID){
                 var len = {{tree|length}};
                 {%- for item in tree %}
-                    if ("{{ item.Id }}" != ""){                       
-                        if (document.getElementById("{{ item.Id }}").checked){
-                            select_ID.push("{{ item.Id }}");
+                    if ("{{ item.ID }}" != ""){                       
+                        if (document.getElementById("{{ item.ID }}").checked){
+                            select_ID.push("{{ item.ID }}");
                             select_name.push("{{ item.RunTime }}");
                             select_PID.push("{{ item.PID }}");
                         }
@@ -406,15 +400,13 @@
                 {% endfor %}
             }
             
-            function del_port()
-            {
+            function del_port(){
                 select_ID = [];
                 select_name = [];
                 select_PID = [];
                 cal_checkbox_select(select_ID, select_name, select_PID);
-                var answer = confirm("Make sure you want to delete it !");
-                console.log(answer)
-                $.ajax({
+                if(confirm("Make sure you want to delete it or them !")){
+                    $.ajax({
                     type:'POST',
                     url:'{{url_for("view_training_del_post")}}',
                     data:JSON.stringify(select_name),
@@ -423,6 +415,9 @@
                         window.location.href = "view_training";
                     }
                 });
+                }
+                console.log(answer)
+                
             }
         </script>
     </body>

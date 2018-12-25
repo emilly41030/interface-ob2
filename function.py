@@ -136,17 +136,21 @@ def file_remove(file_path):
     else:
         print("File doesnot exist: "+file_path)
 
-def add_class(classes, classNamePath):    
+def add_class(classes, classNamePath):
     try:
-        del classes[:]
+        class_str = ""
+        del classes[:]    
         with open(classNamePath, 'r') as f:
-                for line in f: 
+                for line in f:
                     if not line=="":
                         line = line.strip() #濾除空白、換行之類的特出符號
-                        classes.append(line)
+                        classes.append(line)                        
+                        class_str = class_str+line+","
         if "" in classes:
             classes.remove("")
-        print("add_class = "+str(classes))        
+        print("add_class = "+str(classes))
+       
+        return class_str[:-1]
     except:
         return "class import error"
 
@@ -237,13 +241,12 @@ def write_file(log_path, result_dir):
 
 
 
-def read_reversed(classes, paras):    
-    datasetName = paras[0]
+def read_reversed(classes, paras, datasetName):
     max_batches = paras[1]
     learning_rate = paras[2]
     batch = paras[3]
     subdivisions = paras[4]
-    current = paras[5]   
+    current = paras[5]
     cfg_yolo = 'static/task/'+current+'/yolov3_'+datasetName+'.cfg'   
     replace_count=[]
     count=0

@@ -1,0 +1,94 @@
+<html>
+    <head>
+       <title>Deep Learning</title>
+       <link rel="stylesheet" href="static/bootstrap.min.css">
+       <link rel="stylesheet" href="static/bootstrap-theme.min.css">
+       <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>   
+       <meta name="viewport" content = "width=device-width, initial-scale=1.0">
+       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    </head>
+    <script>            
+            function myFunction(){
+                var class_name=["aeroplane", "bicycle", "bird", "boat","bottle","bus","car","cat","chair","cow","diningtable","dog","horse","motorbike","person","pottedplant","sheep","train","sofa","tvmonitor"];
+                var textarea = document.getElementById('ta');
+                textarea.value = class_name.join("\n");
+            }
+            function myFunction2(){
+                var class_name=[];
+                var textarea = document.getElementById('ta');
+                textarea.value = ""
+            }
+            var is_training = true;
+            $( document ).ready(function() {
+                check_train();
+                var t1 = window.setInterval(()=>{
+                    is_training = check_train();
+                    if(is_training==false){
+                        clearInterval(t1);
+                    }                    
+                }, 1000);
+
+                
+                $('li a.active').removeClass('active');
+                $('a[href="' + location.pathname + '"]').closest('li a').addClass('active'); 
+            });
+
+            function check_train(){               
+                $.ajax({
+                    type:'POST',
+                    url:'{{url_for("trainTask_post")}}',
+                    success:function(data){
+                        if(data=="0"){
+                            $('#train_nav').hide();
+                            is_training = false;
+                        }
+                        else if(data=="1"){
+                            $('#train_nav').show();
+                            is_training = true;
+                        }
+                    },
+                });
+                return is_training
+            }
+           
+         </script>
+    <body>
+        {% include '_navbar.html' %}
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+           
+            <div class="container"> 
+            <h2>Dataset</h2>
+            <!-- <form method="post"> -->
+            <form action="{{ url_for('new_dataset') }}" method="post">
+                <label>Image path: </label>
+                <input type="text" class="form-control" id="train_dataset" name="train_imagePath" value="/home/kelly/data/Dataset/Mura/LCD4/label_jpg">
+                <br>
+                <label>xml path: </label>
+                <input type="text" class="form-control" id="train_dataset" name="train_labelPath" value="/home/kelly/data/Dataset/Mura/LCD4/has_label-A">
+    <!--        <input type="file" webkitdirectory directory multiple/> -->
+                <br>
+                <label>class names: </label>
+                <br>
+                <div>
+                    <button type="button" class="btn btn-info" onclick="myFunction2()">Other</button>
+                    <button type="button" class="btn btn-info" onclick="myFunction()">VOC</button>
+                </div>                
+                <br>
+                <textarea cols='10' rows='4' name="classes" id="ta" onchange="change()">shock&#13;&#10;defect</textarea>
+                <br>
+                <br>
+                <label>Dataset name: </label>
+                <input type="text" class="form-control" id="dataset_name" name="dataset_name" value="Mura_LCD4">
+                <br>
+                <button type="submit" class="btn btn-primary" id="bt" name="btn_dataset" >Start</button>                
+            </form>
+            <style>
+            textarea{
+                width: 50%;
+                height: 50%;
+            }
+            </style>
+            </div>
+        </main>
+    </body>
+</html>
